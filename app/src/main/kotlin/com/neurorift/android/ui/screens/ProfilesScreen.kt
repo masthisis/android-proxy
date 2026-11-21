@@ -1,5 +1,6 @@
 package com.neurorift.android.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,6 +16,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -35,6 +37,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.neurorift.android.R
@@ -61,12 +64,20 @@ fun ProfilesScreen(vm: ProfileViewModel = viewModel()) {
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                FloatingActionButton(onClick = {
-                    clipboard.getText()?.toString()?.takeIf { it.isNotBlank() }?.let { vm.importClipboard(it) }
-                }) {
+                FloatingActionButton(
+                    onClick = {
+                        clipboard.getText()?.toString()?.takeIf { it.isNotBlank() }?.let { vm.importClipboard(it) }
+                    },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                ) {
                     Icon(Icons.Filled.ContentPaste, contentDescription = stringResource(R.string.profiles_import_clipboard))
                 }
-                FloatingActionButton(onClick = { showAdd = true }) {
+                FloatingActionButton(
+                    onClick = { showAdd = true },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                ) {
                     Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.profiles_add_url))
                 }
             }
@@ -139,6 +150,15 @@ private fun ProfileCard(
     Card(
         onClick = onActivate,
         modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        ),
+        border = if (active) {
+            BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary)
+        } else {
+            null
+        },
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {

@@ -36,4 +36,10 @@
     <string name="profiles_name_label">نام (اختیاری)</string>
     <string name="profiles_add">افزودن</string>
     <string name="profiles_cancel">لغو</string>
+    <!-- خانه به سبک پروتون (مسئلهٔ ۳۴) -->
+    <string name="home_disconnected">شما متصل نیستید</string>
+    <string name="home_connected_hint">ترافیک شما از طریق تانل محافظت می‌شود.</string>
+    <string name="home_idle_hint">برای اتصال VPN روی دکمه بزنید.</string>
+    <string name="home_active_profile">پروفایل فعال</string>
+    <string name="home_no_profile">پروفایلی انتخاب نشده — از بخش اشتراک‌ها اضافه کنید</string>
 </resources>

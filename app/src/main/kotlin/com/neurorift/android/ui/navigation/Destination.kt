@@ -1,8 +1,8 @@
 package com.neurorift.android.ui.navigation
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AirplanemodeActive
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.ViewList
@@ -20,7 +20,7 @@ enum class Destination(
     val icon: ImageVector,
 ) {
     Dashboard("dashboard", Icons.Filled.Home),
-    Proxies("proxies", Icons.Filled.AirplanemodeActive),
+    Proxies("proxies", Icons.Filled.Public),
     Profiles("profiles", Icons.Filled.ViewList),
     Test("test", Icons.Filled.Speed),
     Settings("settings", Icons.Filled.Settings),
