@@ -57,6 +57,21 @@ jobs:
       - name: Set up Gradle (wrapper validation + caching)
         uses: gradle/actions/setup-gradle@v5
 
+      - name: Restore signing keystore (optional)
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        if: ${{ env.KEYSTORE_BASE64 != '' }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+          {
+            echo "KEYSTORE_FILE=$RUNNER_TEMP/release.keystore"
+            echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}"
+            echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}"
+            echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}"
+          } >> "$GITHUB_ENV"
+          # Secret values are never printed — only the presence is logged.
+          echo "release signing: configured keystore"
+
       - name: Build release APKs (per-ABI + universal)
         run: ./gradlew -PappVersion="$VERSION" -PappVersionCode="$VERSION_CODE" -PsplitApk=true assembleRelease
 
@@ -101,3 +116,44 @@ jobs:
           files: |
             app/build/outputs/apk/release/dist/NeuroRift-*-android-*.apk
             app/build/outputs/apk/release/dist/checksums-android.txt
+
+  smoke:
+    name: Release smoke (checksums + ABI sanity)
+    runs-on: ubuntu-latest
+    needs: release
+    steps:
+      - name: Download every published asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release download "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --dir dist --clobber
+
+      - name: Verify SHA256 of every asset
+        run: |
+          cd dist
+          sha256sum --check checksums-android.txt
+
+      - name: Verify universal APK contains all ABIs
+        run: |
+          universal=$(ls dist/*universal*.apk | head -1)
+          echo "universal APK: $universal"
+          for abi in arm64-v8a armeabi-v7a x86_64; do
+            unzip -l "$universal" | grep -q "lib/$abi/" \
+              || { echo "FAIL: missing lib/$abi in universal APK"; exit 1; }
+            echo "ok: lib/$abi present"
+          done
+
+      - name: Verify per-ABI APK names + prerelease flag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ls dist/*-android-arm64-v8a.apk dist/*-android-armeabi-v7a.apk \
+             dist/*-android-x86_64.apk dist/*-android-universal.apk >/dev/null
+          info=$(gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --json isPrerelease)
+          echo "$info"
+          if echo "$GITHUB_REF_NAME" | grep -q -- '-'; then
+            echo "$info" | grep -q '"isPrerelease":true' \
+              || { echo "FAIL: tag with suffix must be a prerelease"; exit 1; }
+          else
+            echo "$info" | grep -q '"isPrerelease":false' \
+              || { echo "FAIL: plain semver tag must be a full release"; exit 1; }
+          done
