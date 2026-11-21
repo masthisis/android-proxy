@@ -51,7 +51,7 @@ codebases stay conceptually identical.
 | Service | Methods |
 | --- | --- |
 | `EngineService` | `status`, `start`, `stop`, `restart` — state machine `stopped → starting → running ⇄ updating`, `failed` terminal |
-| `ProfileService` | `list`, `addFromUrl`, `addFromText`, `addFromFile`, `update`, `updateAll` (issue #18: parallel refresh, bounded concurrency 4, returns `UpdateSummary{updated, failed, skipped, errors}`), `remove`, `setActive`, `rename`, `setInterval`, `nodes`, `getRaw`, `updateRaw` (raw YAML editor, issue #17: validate-before-write, atomic, hot re-apply for the active profile) |
+| `ProfileService` | `list`, `addFromUrl`, `addFromText`, `addFromFile`, `update`, `updateAll` (issue #18: parallel refresh, bounded concurrency 4, returns `UpdateSummary{updated, failed, skipped, errors}`), `remove`, `setActive`, `setUnionActive`/`unionIds` (issue #23: subscription union — union-active NODES providers join the active profile's Node Select `use` list, primary unchanged), `rename`, `setInterval`, `nodes`, `getRaw`, `updateRaw` (raw YAML editor, issue #17: validate-before-write, atomic, hot re-apply for the active profile) |
 | `ProxyService` | `groups`, `selectProxy`, `testGroup`, `testAllNodes`, `testNode`, `mode`/`setMode`, `rules`, `closeConnection`, `closeAllConnections` |
 | `TestService` | `speedTest`, `speedTestQueue`, `cancelSpeedTest`, `speedHistory`, `latencyHistory`, `testProfileLatency` |
 | `SettingsService` | `get`, `save` (sanitized) |

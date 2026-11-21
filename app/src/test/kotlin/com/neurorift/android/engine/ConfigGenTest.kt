@@ -74,6 +74,71 @@ class ConfigGenTest {
         assertTrue(out.contains("\"♻️ NR Auto\""))
     }
 
+    // --------------------------------------------------------------- union --
+
+    /** The Node Select `use:` block — from its first occurrence to the Auto group. */
+    private fun nodeSelectUseBlock(out: String): String {
+        val start = out.indexOf("use:")
+        val end = out.indexOf("\"♻️ NR Auto\"")
+        assertTrue(start != -1 && end != -1 && start < end)
+        return out.substring(start, end)
+    }
+
+    @Test
+    fun `union providers append to the node select use list in registry order`() {
+        val profiles = listOf(
+            nodesProfile("a", active = true),
+            nodesProfile("b"),
+            nodesProfile("c"),
+        )
+        val out = ConfigGen.generate(settings, profiles, "a", unionIds = listOf("c", "b")) { "" }
+
+        val useBlock = nodeSelectUseBlock(out)
+        // Primary first, then union members in registry order (not the
+        // order of the unionIds list).
+        val aIdx = useBlock.indexOf("sub-a")
+        val bIdx = useBlock.indexOf("sub-b")
+        val cIdx = useBlock.indexOf("sub-c")
+        assertTrue(aIdx != -1 && bIdx != -1 && cIdx != -1)
+        assertTrue("primary before union members", aIdx < bIdx)
+        assertTrue(bIdx < cIdx)
+    }
+
+    @Test
+    fun `union member keeps no health check while the primary keeps one`() {
+        val profiles = listOf(nodesProfile("a", active = true), nodesProfile("b"), nodesProfile("c"))
+        val out = ConfigGen.generate(settings, profiles, "a", unionIds = listOf("b")) { "" }
+
+        val subA = out.indexOf("sub-a:")
+        val subB = out.indexOf("sub-b:")
+        val subC = out.indexOf("sub-c:")
+        assertTrue(subA != -1 && subB != -1 && subC != -1)
+        assertTrue("primary provider carries the health check", out.substring(subA, subB).contains("health-check"))
+        assertFalse("union member has no health check", out.substring(subB, subC).contains("health-check"))
+    }
+
+    @Test
+    fun `empty union keeps the generated config unchanged`() {
+        val profiles = listOf(nodesProfile("a", active = true), nodesProfile("b"))
+        val without = ConfigGen.generate(settings, profiles, "a") { "" }
+        val withEmpty = ConfigGen.generate(settings, profiles, "a", unionIds = emptyList()) { "" }
+        assertEquals(without, withEmpty)
+    }
+
+    @Test
+    fun `union ids that are unknown or clash-kind are ignored`() {
+        val profiles = listOf(
+            nodesProfile("a", active = true),
+            ProfileMeta(id = "c1", name = "clash", kind = ProfileKind.CLASH, rawPath = "clash/c1.yaml"),
+        )
+        val out = ConfigGen.generate(settings, profiles, "a", unionIds = listOf("c1", "ghost")) { "" }
+
+        val useBlock = nodeSelectUseBlock(out)
+        assertTrue(useBlock.contains("sub-a"))
+        assertFalse("clash profiles never union (raw doc splice)", useBlock.contains("sub-c1"))
+        assertFalse("unknown ids never render", useBlock.contains("sub-ghost"))
+    }
+
     // --------------------------------------------------------------- clash --
 
     @Test

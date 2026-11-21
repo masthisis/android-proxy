@@ -41,6 +41,9 @@
     <string name="profiles_summary">updated %1$d · failed %2$d · skipped %3$d</string>
     <string name="profiles_next_update">next: %1$s</string>
     <string name="profiles_scheduler_error">Subscription auto-update failed: %1$s</string>
+    <!-- Subscription union (#23) -->
+    <string name="profiles_union">union</string>
+    <string name="profiles_union_toggle">Subscription union — route as one set</string>
     <!-- Proton-style home (#34) -->
     <string name="home_disconnected">You are not connected</string>
     <string name="home_connected_hint">Your traffic is protected through the tunnel.</string>
