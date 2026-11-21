@@ -42,7 +42,7 @@ jobs:
           java-version: '21'
 
       - name: Set up Gradle (wrapper validation + caching)
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Build release APKs (per-ABI + universal)
         run: ./gradlew -PappVersion="$VERSION" -PappVersionCode="$VERSION_CODE" -PsplitApk=true assembleRelease
