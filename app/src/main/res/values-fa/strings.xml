@@ -42,4 +42,13 @@
     <string name="home_idle_hint">برای اتصال VPN روی دکمه بزنید.</string>
     <string name="home_active_profile">پروفایل فعال</string>
     <string name="home_no_profile">پروفایلی انتخاب نشده — از بخش اشتراک‌ها اضافه کنید</string>
+    <!-- داشبورد گروه‌ها (مسئلهٔ ۱۲) -->
+    <string name="proxies_need_vpn">برای بارگذاری نودها ابتدا متصل شوید</string>
+    <string name="proxies_need_vpn_hint">داشبورد گروه‌ها از موتور زنده می‌خواند — تانل را از خانه روشن کنید.</string>
+    <string name="proxies_search">جست‌وجوی نودها</string>
+    <string name="proxies_sort_toggle">تغییر مرتب‌سازی (تأخیر / نام)</string>
+    <string name="proxies_test_all">تست همهٔ نودها</string>
+    <string name="proxies_test_group">تست این گروه</string>
+    <string name="proxies_test_node">تست این نود</string>
+    <string name="proxies_empty">گروهی نیست — با یک پروفایل فعال متصل شوید.</string>
 </resources>

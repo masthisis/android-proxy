@@ -24,6 +24,7 @@ import androidx.navigation.compose.rememberNavController
 import com.neurorift.android.R
 import com.neurorift.android.ui.screens.DashboardScreen
 import com.neurorift.android.ui.screens.PlaceholderScreen
+import com.neurorift.android.ui.screens.ProxiesScreen
 import com.neurorift.android.ui.screens.ProfilesScreen
 
 /**
@@ -95,6 +96,7 @@ fun NeuroRiftNavGraph(
                 composable(destination.route) {
                     when (destination) {
                         Destination.Dashboard -> DashboardScreen(onConnect = onConnect, onDisconnect = onDisconnect)
+                        Destination.Proxies -> ProxiesScreen()
                         Destination.Profiles -> ProfilesScreen()
                         else -> PlaceholderScreen(
                             title = stringResource(destination.labelRes),
