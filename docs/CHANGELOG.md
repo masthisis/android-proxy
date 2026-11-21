@@ -50,6 +50,22 @@ is [SemVer](https://semver.org/). Releases are cut from `main` tags.
   an Update All action — parallel refresh of every URL-sourced profile with
   bounded concurrency 4, an `updated X · failed Y · skipped Z` summary row
   and a per-card "next" sync time; all strings land in EN + FA.
+- **In-app self-update** (issue #20): the app updates itself from its own
+  GitHub releases — `releases.atom` feed only (Windows parity, never
+  api.github.com) parsed by a pure JVM-tested atom parser, prereleases gated
+  behind `updates.includePrerelease`, newest release picked through a pure
+  `Semver` comparison (v-strip, numeric triple, prerelease below its plain
+  version). The last-seen version + check timestamp persist in
+  `updatestate.json` (Windows parity: notify once per release), the
+  device-ABI APK asset (`NeuroRift-<version>-android-<abi>.apk`, universal
+  fallback) streams into the cache dir with live progress and is verified
+  against the release `checksums-android.txt` (SHA256, mismatch → delete +
+  error state), and a verified build hands off to the system installer via
+  FileProvider (`REQUEST_INSTALL_PACKAGES`). Settings → Updates gains Check
+  now + status + Install; the Dashboard shows an update banner chip while
+  available/downloading/ready; `updates.autoCheck` checks at most every 6 h
+  on app start. JVM tests pin Semver ordering, the asset naming/URL
+  derivation and the atom parsing; strings land in EN + FA.
 - **Test Center** (issue #15): the Test tab grows into a real throughput
   lab — multi-stream download + upload speed tests routed through the
   hidden `⚡ NR SpeedTest` selector and its dedicated listener (node select

@@ -136,6 +136,16 @@
     <string name="settings_section_updates">به‌روزرسانی‌ها</string>
     <string name="settings_updates_auto">بررسی خودکار به‌روزرسانی</string>
     <string name="settings_updates_prerelease">شامل نسخه‌های آزمایشی</string>
+    <!-- به‌روزرسانی خود برنامه (مسئلهٔ ۲۰) -->
+    <string name="update_check_now">بررسی اکنون</string>
+    <string name="update_checking">در حال بررسی به‌روزرسانی…</string>
+    <string name="update_available">به‌روزرسانی موجود است: %1$s</string>
+    <string name="update_none">آخرین نسخه را دارید</string>
+    <string name="update_download">در حال دانلود به‌روزرسانی…</string>
+    <string name="update_ready">آمادهٔ نصب</string>
+    <string name="update_install">نصب</string>
+    <string name="update_failed">به‌روزرسانی ناموفق بود: %1$s</string>
+    <string name="update_banner">به‌روزرسانی برنامه</string>
     <string name="settings_section_split">تونل‌گذاری تفکیکی</string>
     <string name="settings_split_pick">انتخاب برنامه‌ها</string>
     <string name="settings_section_about">درباره</string>

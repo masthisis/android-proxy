@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FileProvider paths for the self-updater (issue #20): downloaded APKs
+     live in the cache dir; the whole cache dir is shared read-only with the
+     system installer via a grantUriPermissions content URI. -->
+<paths>
+    <cache-path
+        name="apk"
+        path="." />
+</paths>
