@@ -24,7 +24,10 @@ val appVersionCode: Int =
 // under ANDROID_HOME (see docs/BUILDING.md).
 // ---------------------------------------------------------------------------
 val skipCore = (project.findProperty("skipCore") as String?) == "true"
-val coreAarFile = rootProject.layout.projectDirectory.file("core/build/nrcore.aar")
+// Default output: core/build/nrcore.aar. Override the consumed artifact path
+// (not the build output) with -PcoreAarPath= for out-of-tree stubs/CI caches.
+val coreAarFile = rootProject.layout.projectDirectory
+    .file(project.findProperty("coreAarPath") as String? ?: "core/build/nrcore.aar")
 val coreTarget = (project.findProperty("coreTarget") as String?) ?: "android"
 
 val buildCoreAar by tasks.registering(Exec::class) {
@@ -133,6 +136,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.service)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.navigation.compose)
 
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)

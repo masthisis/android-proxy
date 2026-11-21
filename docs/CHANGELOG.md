@@ -24,6 +24,11 @@ is [SemVer](https://semver.org/). Releases are cut from `main` tags.
 
 ### Added
 
+- **App shell** (issue #9): bottom navigation with the five Windows-parity
+  destinations (Dashboard/Proxies/Profiles/Test/Settings), stable secondary
+  routes (Connections/Logs/Rules), edge-to-edge Material 3 shell, honest
+  "lands with issue #N" placeholders, Dashboard base with the live VPN
+  connect switch. Every user-facing string exists in EN + FA (RTL).
 - **VPN layer** (`vpn/TunService.kt`, issue #8): VpnService-based tunnel —
   one-time prepare flow, tun builder (172.19.0.x/30 + IPv6, MTU 9000,
   blocking fd), fd hand-off to the core, `protect()` socket hook, uid
