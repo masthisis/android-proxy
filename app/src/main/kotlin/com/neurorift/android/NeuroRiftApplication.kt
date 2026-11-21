@@ -1,6 +1,10 @@
 package com.neurorift.android
 
 import android.app.Application
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ProcessLifecycleOwner
+import com.neurorift.android.engine.EngineRuntime
 import com.neurorift.android.profile.SubscriptionScheduler
 import com.neurorift.android.report.CrashReporter
 import com.neurorift.android.settings.SettingsStore
@@ -23,6 +27,10 @@ import kotlinx.coroutines.launch
  * Issue #25: automatic problem reports — a redacting uncaught-exception
  * handler captures crash bundles (secrets, bearer tokens and subscription
  * URLs are stripped before anything touches disk).
+ *
+ * Issue #26: the background sampling gate — stream UI emissions pause while
+ * the app is backgrounded and resume on foreground (cheap bookkeeping keeps
+ * running so resume is instantaneous).
  */
 class NeuroRiftApplication : Application() {
 
@@ -41,5 +49,18 @@ class NeuroRiftApplication : Application() {
         appScope.launch {
             runCatching { UpdateService.shared(this@NeuroRiftApplication).autoCheck() }
         }
+        observeAppLifecycle()
+    }
+
+    private fun observeAppLifecycle() {
+        ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
+            override fun onStart(owner: LifecycleOwner) {
+                EngineRuntime.manager?.streams?.gate?.paused = false
+            }
+
+            override fun onStop(owner: LifecycleOwner) {
+                EngineRuntime.manager?.streams?.gate?.paused = true
+            }
+        })
     }
 }

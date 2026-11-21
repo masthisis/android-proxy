@@ -52,6 +52,9 @@ class StreamClient(
 
     // ---------------------------------------------------------------- flows --
 
+    /** UI emissions gate — paused while the app is backgrounded (#26). */
+    val gate = SamplingGate()
+
     /** 1 Hz coalesced traffic ticks (bytes/s + core memory). */
     val traffic: kotlinx.coroutines.flow.MutableSharedFlow<TrafficTick> =
         kotlinx.coroutines.flow.MutableSharedFlow(replay = 1, extraBufferCapacity = 4)
@@ -92,10 +95,16 @@ class StreamClient(
             },
         )
 
-        // 1 Hz coalescing cadence — identical to the Windows client.
+        // 1 Hz coalescing cadence — identical to the Windows client. While
+        // the app is backgrounded the gate skips UI emissions (issue #26):
+        // the atomics keep updating so resume is instantaneous.
         while (isActive) {
-            traffic.emit(TrafficTick(up = up.get(), down = down.get(), memory = memory.get()))
-            delay(1_000)
+            if (gate.shouldEmit()) {
+                traffic.emit(TrafficTick(up = up.get(), down = down.get(), memory = memory.get()))
+                delay(1_000)
+            } else {
+                delay(BACKGROUND_DELAY_MS)
+            }
         }
         readers.forEach { it.cancel() }
     }
@@ -132,7 +141,11 @@ class StreamClient(
                     copy
                 }
             }
-            if (chunk != null) logs.emit(chunk)
+            if (chunk != null) {
+                // Ring already updated by the reader; the UI emit is gated
+                // while backgrounded (issue #26).
+                if (gate.shouldEmit()) logs.emit(chunk)
+            }
         }
         reader.cancel()
     }
@@ -166,6 +179,7 @@ class StreamClient(
         private const val RETRY_MS = 2_000L
         private const val FLUSH_MS = 500L
         private const val MAX_PENDING = 200
+        const val BACKGROUND_DELAY_MS = 5_000L
     }
 }
 
