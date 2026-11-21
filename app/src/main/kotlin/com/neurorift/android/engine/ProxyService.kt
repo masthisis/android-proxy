@@ -149,9 +149,15 @@ class ProxyService(
     /**
      * Refetch callback on `groups:refresh` (profile switch / hot reload) —
      * the Windows #40 regression class: stale group state after reloads.
+     * Runs the suspend callback in its own collector so callers can do
+     * network work inside the handler.
      */
     fun observeGroupsRefresh(scope: CoroutineScope, onRefresh: suspend () -> Unit) {
-        EventBus.on(Events.GROUPS_REFRESH, scope) { onRefresh() }
+        scope.launch {
+            EventBus.events.collect { (name, _) ->
+                if (name == Events.GROUPS_REFRESH) onRefresh()
+            }
+        }
     }
 
     private fun JsonObject.str(key: String): String? =

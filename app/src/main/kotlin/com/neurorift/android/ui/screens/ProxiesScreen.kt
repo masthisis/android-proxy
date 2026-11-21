@@ -1,5 +1,7 @@
 package com.neurorift.android.ui.screens
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -284,7 +286,11 @@ private fun NodeRow(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier
                 .weight(1f)
-                .clickableNoRipple(onSelect),
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onSelect,
+                ),
         )
         IconButton(onClick = onTest, modifier = Modifier.size(28.dp)) {
             Icon(
@@ -314,12 +320,3 @@ private fun DelayChip(delay: Int?) {
     )
 }
 
-/** Ripple-free row click (Windows-parity ergonomics, Proton look). */
-private fun Modifier.clickableNoRipple(onClick: () -> Unit): Modifier =
-    androidx.compose.ui.composed {
-        clickable(
-            interactionSource = remember { MutableInteractionSource() },
-            indication = null,
-            onClick = onClick,
-        )
-    }
