@@ -53,10 +53,12 @@ class VpnTileService : TileService() {
                     TunService.start(this)
                 } else {
                     // Permission dialog must come from an activity.
-                    unlockAndRun(
-                        Intent(this, MainActivity::class.java)
-                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                    )
+                    unlockAndRun {
+                        startActivity(
+                            Intent(this, MainActivity::class.java)
+                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                        )
+                    }
                 }
             }
             EngineState.RUNNING -> TunService.stop(this)
@@ -66,7 +68,7 @@ class VpnTileService : TileService() {
     }
 
     private fun refresh() {
-        val tile = tile ?: return
+        val tile = qsTile ?: return
         tile.state = when (EngineHolder.status.value.state) {
             EngineState.RUNNING -> Tile.STATE_ACTIVE
             EngineState.STARTING, EngineState.STOPPING -> Tile.STATE_UNAVAILABLE
