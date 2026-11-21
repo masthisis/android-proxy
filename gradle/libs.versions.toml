@@ -1,6 +1,6 @@
 [versions]
 # Build (AGP 9 = built-in Kotlin; do NOT add org.jetbrains.kotlin.android)
-agp = "9.5.1"
+agp = "9.5.2"
 gradle = "9.6.0"
 kotlin = "2.4.21"                    # compose plugin version must equal kotlin version
 composeBom = "2026.11.01"
