@@ -156,4 +156,4 @@ jobs:
           else
             echo "$info" | grep -q '"isPrerelease":false' \
               || { echo "FAIL: plain semver tag must be a full release"; exit 1; }
-          done
+          fi
