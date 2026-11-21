@@ -19,12 +19,15 @@ import kotlinx.serialization.json.Json
  * the sanitized result (Windows service_settings parity); callers then
  * trigger the engine re-apply.
  */
+
+/** Top-level DataStore delegate — one store per process, by contract. */
+private val Context.settingsDataStore by preferencesDataStore(name = "settings")
+
 class SettingsStore private constructor(private val context: Context) {
 
-    private val Context.dataStore by preferencesDataStore(name = "settings")
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
-    val settings: Flow<Settings> = context.dataStore.data.map { prefs ->
+    val settings: Flow<Settings> = context.settingsDataStore.data.map { prefs ->
         prefs[KEY]?.let { decode(it) } ?: Settings()
     }
 
@@ -35,7 +38,7 @@ class SettingsStore private constructor(private val context: Context) {
 
     suspend fun save(input: Settings): SettingsStore.Saved {
         val sanitized = SettingsValidator.sanitize(input)
-        context.dataStore.edit { prefs ->
+        context.settingsDataStore.edit { prefs ->
             prefs[KEY] = json.encodeToString(Settings.serializer(), sanitized.settings)
         }
         return SettingsStore.Saved(sanitized.settings, sanitized.fixes)

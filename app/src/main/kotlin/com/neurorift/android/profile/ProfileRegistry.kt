@@ -12,8 +12,8 @@ object ProfileRegistry {
     private fun manager(context: Context): ProfileManager = ProfileViewModel.manager(context)
 
     fun meta(context: Context): List<ProfileMeta> =
-        runCatching { manager(context).meta() }.getOrElse(emptyList())
+        runCatching { manager(context).meta() }.getOrElse { emptyList() }
 
     fun activeId(context: Context): String? =
-        runCatching { manager(context).activeId() }.getOrNull()
+        runCatching { manager(context).activeId() }.getOrElse { null }
 }

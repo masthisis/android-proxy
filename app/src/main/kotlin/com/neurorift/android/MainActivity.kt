@@ -11,6 +11,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import com.neurorift.android.ui.navigation.NeuroRiftNavGraph
 import com.neurorift.android.ui.theme.NeuroRiftTheme
@@ -66,11 +67,11 @@ class MainActivity : ComponentActivity() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
         // Async read (no disk IO on the main thread); the per-app locale
         // manager applies the change system-wide once loaded.
-        androidx.lifecycle.lifecycleScope.launch {
+        lifecycleScope.launch {
             runCatching {
                 val language = com.neurorift.android.settings.SettingsStore
                     .shared(this@MainActivity).get().language
-                val manager = localeManager
+                val manager = getSystemService(android.app.LocaleManager::class.java) ?: return@launch
                 val current = manager.applicationLocales
                 val target = if (language == "system") {
                     if (current.isEmpty) return@launch
