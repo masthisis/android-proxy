@@ -22,6 +22,16 @@ is [SemVer](https://semver.org/). Releases are cut from `main` tags.
   ABIs) as part of every build; `-PskipCore=true` skips it. CI (test + build)
   and the release workflow install Go + gomobile and build the AAR.
 
+### Added
+
+- **VPN layer** (`vpn/TunService.kt`, issue #8): VpnService-based tunnel —
+  one-time prepare flow, tun builder (172.19.0.x/30 + IPv6, MTU 9000,
+  blocking fd), fd hand-off to the core, `protect()` socket hook, uid
+  resolver (API 31+ connection-owner lookup), Always-on VPN support,
+  foreground notification with live status + disconnect action. Engine state
+  machine (`stopped → starting → running ⇄ stopping`, `failed`) with tests;
+  temporary connect switch in the app shell until #9.
+
 ### Fixed
 
 - Gradle `buildCoreAar` inputs no longer include the task's own output

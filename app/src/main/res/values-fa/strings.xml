@@ -2,4 +2,16 @@
     <string name="app_name">نوروریفت</string>
     <string name="bootstrap_welcome">کنترل‌پنل نوروریفت در حال بارگذاری…</string>
     <string name="bootstrap_subtitle">مسئلهٔ شمارهٔ ۶: راه‌اندازی مخزن</string>
+
+    <!-- لایهٔ VPN (مسئلهٔ ۸) -->
+    <string name="vpn_channel_name">وضعیت VPN</string>
+    <string name="vpn_state_stopped">قطع شده</string>
+    <string name="vpn_state_starting">در حال اتصال…</string>
+    <string name="vpn_state_running">متصل</string>
+    <string name="vpn_state_stopping">در حال قطع…</string>
+    <string name="vpn_state_failed">اتصال ناموفق بود</string>
+    <string name="vpn_action_connect">اتصال</string>
+    <string name="vpn_action_disconnect">قطع اتصال</string>
+    <string name="vpn_error_prepare">مجوز VPN داده نشد</string>
+    <string name="vpn_prepare_needed">اندروید برای ساخت تانل VPN یک‌بار مجوز می‌خواهد.</string>
 </resources>
