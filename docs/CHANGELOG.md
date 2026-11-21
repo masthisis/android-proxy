@@ -21,6 +21,18 @@ is [SemVer](https://semver.org/). Releases are cut from `main` tags.
 
 ### Added
 
+- **Test Center** (issue #15): the Test tab grows into a real throughput
+  lab — multi-stream download + upload speed tests routed through the
+  hidden `⚡ NR SpeedTest` selector and its dedicated listener (node select
+  → parallel GETs/POSTs via the local `127.0.0.1` proxy port), byte-cap
+  presets (100/250/500 MB + settings max), live progress ticks every 500 ms
+  with a cancel button (volatile flag + scope + socket-level cancel), speed
+  results on the `speed:progress`/`speed:done` events, single-node +
+  test-all latency probes, and a file-backed history store
+  (`nettest-history.json`, atomic tmp+rename writes, latest speed per node,
+  ≤50 latency samples per node with per-node Canvas sparklines). The screen
+  degrades to the "connect first" state while the engine is down; JVM tests
+  pin the Mbps math and the store; all strings land in EN + FA.
 - **Release hardening** (issue #21): tag-triggered release workflow gains
   an optional CI keystore (KEYSTORE_BASE64 secret, decoded without printing
   secrets; debug-key fallback stays the local default), plus a release
