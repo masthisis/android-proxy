@@ -1,0 +1,90 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build & publish (Android APKs)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history for release notes)
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Resolve version from tag
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          # versionCode = major*10000 + minor*100 + patch  (rc suffix -> base)
+          BASE="${VERSION%%-*}"
+          MAJOR=$(echo "$BASE" | cut -d. -f1)
+          MINOR=$(echo "$BASE" | cut -d. -f2)
+          PATCH=$(echo "$BASE" | cut -d. -f3)
+          CODE=$((MAJOR * 10000 + MINOR * 100 + PATCH))
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "VERSION_CODE=$CODE" >> "$GITHUB_ENV"
+          echo "Building version $VERSION (code $CODE)"
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle (wrapper validation + caching)
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Build release APKs (per-ABI + universal)
+        run: ./gradlew -PappVersion="$VERSION" -PappVersionCode="$VERSION_CODE" -PsplitApk=true assembleRelease
+
+      - name: Rename artifacts to distribution names + checksums
+        run: |
+          cd app/build/outputs/apk/release
+          mkdir -p dist
+          for f in NeuroRift-*-release.apk; do
+            abi=$(echo "$f" | sed -E 's/^NeuroRift-(.+)-release\.apk$/\1/')
+            cp "$f" "dist/NeuroRift-${VERSION}-android-${abi}.apk"
+          done
+          cd dist
+          ls -la
+          sha256sum * > checksums-android.txt
+          cat checksums-android.txt
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          name: NeuroRift for Android ${{ github.ref_name }}
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          generate_release_notes: true
+          body: |
+            Android build of NeuroRift ${{ github.ref_name }}.
+
+            **Recommended:** download
+            `NeuroRift-*-android-arm64-v8a.apk` for any modern device
+            (2014+). `NeuroRift-*-android-universal.apk` works on every
+            architecture. SHA256 sums for all artifacts are in
+            `checksums-android.txt`.
+
+            Install: allow *Install unknown apps* for your browser/file
+            manager, open the APK, launch NeuroRift, add your subscription
+            (Profiles → Add from URL), pick a node, flip the connect switch.
+            Android shows the VPN permission dialog once.
+
+            The builds are self-signed — treat GitHub Releases + the
+            published checksums as the integrity chain. Full changes:
+            [CHANGELOG.md](blob/main/docs/CHANGELOG.md).
+          fail_on_unmatched_files: true
+          files: |
+            app/build/outputs/apk/release/dist/NeuroRift-*-android-*.apk
+            app/build/outputs/apk/release/dist/checksums-android.txt
