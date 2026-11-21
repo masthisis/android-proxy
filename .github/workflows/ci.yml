@@ -28,13 +28,28 @@ jobs:
           distribution: temurin
           java-version: '21'
 
+      - name: Set up Go (core AAR toolchain)
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: core/go.mod
+          cache-dependency-path: core/go.sum
+
+      - name: Install gomobile + gobind
+        run: |
+          go install golang.org/x/mobile/cmd/gomobile@latest
+          go install golang.org/x/mobile/cmd/gobind@latest
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+          gomobile init
+
       - name: Set up Gradle (wrapper validation + caching)
         uses: gradle/actions/setup-gradle@v5
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/main' }}
 
-      - name: Unit tests + lint
-        run: ./gradlew testDebugUnitTest lintDebug
+      - name: Vet + unit tests + lint (core AAR built first)
+        run: |
+          cd core && go vet ./... && go test ./...
+          cd .. && ./gradlew testDebugUnitTest lintDebug
 
   build:
     name: Build (Debug APK)
@@ -49,12 +64,25 @@ jobs:
           distribution: temurin
           java-version: '21'
 
+      - name: Set up Go (core AAR toolchain)
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: core/go.mod
+          cache-dependency-path: core/go.sum
+
+      - name: Install gomobile + gobind
+        run: |
+          go install golang.org/x/mobile/cmd/gomobile@latest
+          go install golang.org/x/mobile/cmd/gobind@latest
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+          gomobile init
+
       - name: Set up Gradle (wrapper validation + caching)
         uses: gradle/actions/setup-gradle@v5
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/main' }}
 
-      - name: Build debug APK
+      - name: Build debug APK (Go core -> AAR -> APK)
         run: ./gradlew assembleDebug
 
       - name: Upload build artifact

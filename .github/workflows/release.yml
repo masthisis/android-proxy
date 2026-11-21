@@ -41,6 +41,19 @@ jobs:
           distribution: temurin
           java-version: '21'
 
+      - name: Set up Go (core AAR toolchain)
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: core/go.mod
+          cache-dependency-path: core/go.sum
+
+      - name: Install gomobile + gobind
+        run: |
+          go install golang.org/x/mobile/cmd/gomobile@latest
+          go install golang.org/x/mobile/cmd/gobind@latest
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+          gomobile init
+
       - name: Set up Gradle (wrapper validation + caching)
         uses: gradle/actions/setup-gradle@v5
 
