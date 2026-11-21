@@ -26,7 +26,7 @@ serialization = "1.13.0"
 
 # Networking
 okhttp = "5.5.1"
-snakeyaml = "2.5"
+snakeyaml = "2.7"
 
 # DI
 hilt = "2.60.1"
