@@ -131,6 +131,35 @@ class MihomoRestClient(
             }.getOrNull()
         }
 
+    /**
+     * Batch URL test of a whole group — mihomo probes every member
+     * concurrently and answers a map {node: delayMs}; unreachable nodes are
+     * omitted (issue #12 batch test path).
+     */
+    suspend fun groupDelay(group: String, url: String, timeoutMs: Int): Map<String, Int> =
+        call(
+            request(
+                "/group/" + URLEncoder.encode(group, "UTF-8") +
+                    "/delay?url=" + URLEncoder.encode(url, "UTF-8") +
+                    "&timeout=" + timeoutMs,
+            ),
+        ).getOrNull()?.second?.let { body ->
+            runCatching {
+                val obj = json.decodeFromString<JsonObject>(body)
+                obj.entries.mapNotNull { (name, value) ->
+                    (value as? JsonPrimitive)?.content?.toIntOrNull()?.let { name to it }
+                }.toMap()
+            }.getOrDefault(emptyMap())
+        } ?: emptyMap()
+
+    /** Current live mode ("rule" | "global" | "direct") or null. */
+    suspend fun mode(): String? =
+        call(request("/configs")).getOrNull()?.second?.let { body ->
+            runCatching {
+                json.decodeFromString<JsonObject>(body)["mode"]?.jsonPrimitive?.content
+            }.getOrNull()
+        }
+
     suspend fun rules(): List<String> =
         call(request("/rules")).getOrNull()?.second?.let { body ->
             runCatching {

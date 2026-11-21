@@ -21,6 +21,17 @@ is [SemVer](https://semver.org/). Releases are cut from `main` tags.
 
 ### Added
 
+- **Groups dashboard** (issue #12): Proxies screen — mode chips
+  (rule/global/direct live patch), search + sort (delay/name) controls,
+  group cards (Selector/URLTest/Fallback/LoadBalance) with per-node delay
+  chips colored by the Windows NodeChip palette (<200 green, <500 orange,
+  else red), hidden internal groups collapsed by default, single-node probe
+  through the hidden speed-test selector, one-shot batch URL tests via
+  `/group/<name>/delay`, "test all nodes", selection persisted across hot
+  reloads (store-selected), and `groups:refresh` refetch after profile
+  switches (Windows bug #40 regression covered by JVM tests). Engine
+  additions: `ProxyService`, `EngineRuntime` process registry,
+  `/group/<g>/delay` + `/configs` mode endpoints on the REST client.
 - Repository bootstrap: Gradle 9.6 + AGP 9.5 + Kotlin 2.4 project skeleton,
   Jetpack Compose (Material 3) app shell placeholder, CI, issue templates,
   dependabot, and the documentation foundation.

@@ -41,6 +41,16 @@ class EngineManager(
     private val applier: (String) -> Unit = { CoreBridge.applyConfig(it) },
 ) {
 
+    init {
+        // Process-wide handle for the UI layer (issue #12): the manager is
+        // created exactly once per service instance; the registry lets the
+        // screens reach the REST client + streams without service plumbing.
+        EngineRuntime.manager = this
+    }
+
+    /** The settings snapshot this manager was built with (test URL, ports). */
+    fun currentSettings(): EngineSettings = settingsProvider()
+
     val restClient: MihomoRestClient =
         MihomoRestClient(settingsProvider().controllerPort) { settingsProvider().controllerSecret }
 

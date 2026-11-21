@@ -42,4 +42,13 @@
     <string name="home_idle_hint">Tap the button to connect the VPN.</string>
     <string name="home_active_profile">ACTIVE PROFILE</string>
     <string name="home_no_profile">No profile selected — add one under Profiles</string>
+    <!-- Proxies / groups dashboard (#12) -->
+    <string name="proxies_need_vpn">Connect first to load nodes</string>
+    <string name="proxies_need_vpn_hint">The group dashboard reads the live engine — start the tunnel from Home.</string>
+    <string name="proxies_search">Search nodes</string>
+    <string name="proxies_sort_toggle">Toggle sorting (delay / name)</string>
+    <string name="proxies_test_all">Test all nodes</string>
+    <string name="proxies_test_group">Test this group</string>
+    <string name="proxies_test_node">Test this node</string>
+    <string name="proxies_empty">No groups — connect with an active profile.</string>
 </resources>
