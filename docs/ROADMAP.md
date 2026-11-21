@@ -19,13 +19,13 @@ when an issue lands, remove the bullet here in the same docs sweep.
 
 ## v1.1.0 — test ergonomics + automation
 
-- [ ] #15 feat(test): Test Center — multi-stream speed tests, cancel, byte-cap presets, all profiles
-- [ ] #16 feat(failover): node-health watchdog — strikes/cooldown auto-switch
-- [ ] #17 feat(rules): per-domain routing overrides + raw YAML editor with live validation
-- [ ] #18 feat(platform): subscription auto-update scheduler (WorkManager) + Update All
-- [ ] #19 feat(ui): quick settings tile + boot autostart + notification controls
-- [ ] #20 feat(app): in-app self-update from GitHub releases
-- [ ] #22 docs: full documentation suite (CONTRACT, FEATURES, AI guide, changelog)
+- [x] #15 feat(test): Test Center — multi-stream speed tests, cancel, byte-cap presets, all profiles
+- [x] #16 feat(failover): node-health watchdog — strikes/cooldown auto-switch
+- [x] #17 feat(rules): per-domain routing overrides + raw YAML editor with live validation
+- [x] #18 feat(platform): subscription auto-update scheduler (WorkManager) + Update All
+- [x] #19 feat(ui): quick settings tile + boot autostart + notification controls
+- [x] #20 feat(app): in-app self-update from GitHub releases
+- [x] #22 docs: full documentation suite (CONTRACT, FEATURES, AI guide, changelog)
 
 ## v1.2.0 — subscription power features
 
@@ -36,6 +36,6 @@ when an issue lands, remove the bullet here in the same docs sweep.
 
 - [ ] #25 feat(reporting): automatic problem reports as GitHub issues (crash bundles, redacted)
 - [ ] #26 feat(accessibility): full TalkBack audit + dynamic type sweep
-- [ ] #22 feat(tun): DNS tunnel transports tracked at core level (sing-box parity watch)
+- [x] #22 feat(tun): DNS tunnel transports tracked at core level (sing-box parity watch)
 - [ ] #23 perf(ui): pause traffic sampling while the app is backgrounded
 - [ ] #24 feat(widgets): home-screen traffic widget
