@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Troubleshooting guide
+    url: https://github.com/masthisis/android-proxy/blob/main/TROUBLESHOOTING.md
+    about: Install failures, OEM battery killers, VPN conflicts, split tunneling — most issues are already documented there.
+  - name: Documentation
+    url: https://github.com/masthisis/android-proxy/blob/main/docs/AI_DEVELOPER_GUIDE.md
+    about: Architecture, the UI/service contract and the developer guide.
+  - name: Windows sibling repository
+    url: https://github.com/masthisis/win-proxy
+    about: NeuroRift for Windows — same features, same operating model.

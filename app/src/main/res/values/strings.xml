@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">NeuroRift</string>
+    <string name="bootstrap_welcome">NeuroRift cockpit is loading…</string>
+    <string name="bootstrap_subtitle">Issue #1: repository bootstrap</string>
+</resources>
