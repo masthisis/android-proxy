@@ -117,9 +117,26 @@ class TunService : VpnService() {
                 return START_NOT_STICKY
             }
 
+            ACTION_MODE_CYCLE -> serviceScope.launch(Dispatchers.IO) { cycleMode() }
+
             else -> serviceScope.launch { startVpn() }
         }
         return START_STICKY
+    }
+
+    /**
+     * Notification quick control (issue #19, Windows tray:mode parity):
+     * cycles rule -> global -> direct, persists the new mode and patches the
+     * live core without a reload.
+     */
+    private suspend fun cycleMode() {
+        val order = listOf("rule", "global", "direct")
+        val current = runCatching { settingsStore.get().mode }.getOrDefault("rule")
+        val idx = order.indexOf(current).takeIf { it >= 0 } ?: 0
+        val next = order[(idx + 1) % order.size]
+        runCatching { settingsStore.save(settingsStore.get().copy(mode = next)) }
+        runCatching { engine().setMode(next) }
+        notifyStatus(getString(R.string.vpn_state_running))
     }
 
     override fun onDestroy() {
@@ -241,6 +258,12 @@ class TunService : VpnService() {
             Intent(this, TunService::class.java).setAction(ACTION_STOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
+        val modeCycle = PendingIntent.getService(
+            this,
+            2,
+            Intent(this, TunService::class.java).setAction(ACTION_MODE_CYCLE),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle(getString(R.string.app_name))
@@ -248,6 +271,7 @@ class TunService : VpnService() {
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setContentIntent(open)
+            .addAction(0, getString(R.string.vpn_action_mode_cycle), modeCycle)
             .addAction(0, getString(R.string.vpn_action_disconnect), stop)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .build()
@@ -294,6 +318,7 @@ class TunService : VpnService() {
         const val MTU = 9000
         const val ACTION_START = "com.neurorift.android.action.START"
         const val ACTION_STOP = "com.neurorift.android.action.STOP"
+        const val ACTION_MODE_CYCLE = "com.neurorift.android.action.MODE_CYCLE"
 
         fun start(context: Context) {
             val intent = Intent(context, TunService::class.java).setAction(ACTION_START)
