@@ -17,11 +17,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.neurorift.android.R
+import com.neurorift.android.ui.profiles.YamlEditorScreen
 import com.neurorift.android.ui.screens.ConnectionsScreen
 import com.neurorift.android.ui.screens.DashboardScreen
 import com.neurorift.android.ui.screens.LogsScreen
@@ -109,8 +112,12 @@ fun NeuroRiftNavGraph(
                             onOpenRules = { navController.navigate(SecondaryRoute.RULES) },
                         )
                         Destination.Proxies -> ProxiesScreen()
-                        Destination.Profiles -> ProfilesScreen()
                         Destination.Test -> TestScreen()
+                        Destination.Profiles -> ProfilesScreen(
+                            onEditProfile = { profileId ->
+                                navController.navigate(SecondaryRoute.yamlEditor(profileId))
+                            },
+                        )
                         Destination.Settings -> SettingsScreen(
                             onOpenSplitTunneling = { navController.navigate(SecondaryRoute.SPLIT_TUNNELING) },
                         )
@@ -133,6 +140,12 @@ fun NeuroRiftNavGraph(
             }
             composable(SecondaryRoute.SPLIT_TUNNELING) {
                 SplitTunnelingScreen()
+            }
+            composable(
+                SecondaryRoute.YAML_EDITOR,
+                arguments = listOf(navArgument("profileId") { type = NavType.StringType }),
+            ) { entry ->
+                YamlEditorScreen(profileId = entry.arguments?.getString("profileId").orEmpty())
             }
         }
     }

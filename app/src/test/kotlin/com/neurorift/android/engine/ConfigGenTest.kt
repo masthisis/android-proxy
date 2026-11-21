@@ -150,4 +150,116 @@ class ConfigGenTest {
         assertEquals(settings.speedTestPort, listener.get("port"))
         assertEquals("⚡ NR SpeedTest", listener.get("proxy"))
     }
+
+    // ----------------------------------------------------------- overrides --
+
+    @Test
+    fun `overrides land after the LAN block and before the catch-all`() {
+        val overrides = listOf(
+            ConfigGen.RoutingRule(type = "domain-suffix", pattern = "example.com", target = "DIRECT"),
+            ConfigGen.RoutingRule(type = "domain-keyword", pattern = "ads", target = "REJECT"),
+        )
+        val out = ConfigGen.generate(settings, emptyList(), null, overrides = overrides) { "" }
+
+        val lanIdx = out.indexOf("IP-CIDR,192.168.0.0/16,DIRECT,no-resolve")
+        val firstIdx = out.indexOf("DOMAIN-SUFFIX,example.com,DIRECT")
+        val secondIdx = out.indexOf("DOMAIN-KEYWORD,ads,REJECT")
+        val matchIdx = out.indexOf("MATCH,")
+        assertTrue(lanIdx != -1 && firstIdx != -1 && secondIdx != -1 && matchIdx != -1)
+        assertTrue(lanIdx < firstIdx)
+        assertTrue(firstIdx < secondIdx)
+        assertTrue(secondIdx < matchIdx)
+    }
+
+    @Test
+    fun `override type mapping accepts lowercase and uppercase kinds`() {
+        assertEquals(
+            listOf("DOMAIN-SUFFIX,example.com,DIRECT"),
+            ConfigGen.overrideRules(listOf(ConfigGen.RoutingRule("domain-suffix", "example.com", "DIRECT"))),
+        )
+        assertEquals(
+            listOf("DOMAIN,example.com,DIRECT"),
+            ConfigGen.overrideRules(listOf(ConfigGen.RoutingRule("domain", "example.com", "DIRECT"))),
+        )
+        assertEquals(
+            listOf("DOMAIN-KEYWORD,ads,REJECT"),
+            ConfigGen.overrideRules(listOf(ConfigGen.RoutingRule("DOMAIN-KEYWORD", "ads", "REJECT"))),
+        )
+        assertEquals(
+            listOf("DOMAIN-REGEX,foo,DIRECT"),
+            ConfigGen.overrideRules(listOf(ConfigGen.RoutingRule("domain-regex", "foo", "DIRECT"))),
+        )
+        assertEquals(
+            listOf("PROCESS-NAME,app,DIRECT"),
+            ConfigGen.overrideRules(listOf(ConfigGen.RoutingRule("process-name", "app", "DIRECT"))),
+        )
+        // Unknown kinds fall back to DOMAIN-SUFFIX.
+        assertEquals(
+            listOf("DOMAIN-SUFFIX,foo,DIRECT"),
+            ConfigGen.overrideRules(listOf(ConfigGen.RoutingRule("weird", "foo", "DIRECT"))),
+        )
+    }
+
+    @Test
+    fun `empty overrides keep the generated config unchanged`() {
+        val without = ConfigGen.generate(settings, emptyList(), null) { "" }
+        val withEmpty = ConfigGen.generate(settings, emptyList(), null, overrides = emptyList()) { "" }
+        assertEquals(without, withEmpty)
+    }
+
+    @Test
+    fun `clash splice appends overrides after the user rules`() {
+        val profiles = listOf(
+            ProfileMeta(id = "c9", name = "clash", kind = ProfileKind.CLASH, rawPath = "clash/c9.yaml"),
+        )
+        val userYaml = """
+            proxies:
+              - name: n1
+                type: ss
+                server: 198.51.100.9
+                port: 8389
+            rules:
+              - DOMAIN,one.example,DIRECT
+              - MATCH,MyGroup
+        """.trimIndent()
+        val overrides = listOf(ConfigGen.RoutingRule("domain-suffix", "example.com", "REJECT"))
+        val out = ConfigGen.generate(settings, profiles, "c9", overrides = overrides) { userYaml }
+
+        val userIdx = out.indexOf("DOMAIN,one.example,DIRECT")
+        val userMatchIdx = out.indexOf("MATCH,MyGroup")
+        val overrideIdx = out.indexOf("DOMAIN-SUFFIX,example.com,REJECT")
+        assertTrue(userIdx != -1 && userMatchIdx != -1 && overrideIdx != -1)
+        // User rules keep their order; overrides ride behind them.
+        assertTrue(userIdx < userMatchIdx)
+        assertTrue(userMatchIdx < overrideIdx)
+    }
+
+    @Test
+    fun `clash profile without user rules gets LAN then overrides then MATCH`() {
+        val profiles = listOf(
+            ProfileMeta(id = "c10", name = "clash", kind = ProfileKind.CLASH, rawPath = "clash/c10.yaml"),
+        )
+        val userYaml = "proxies:\n  - name: n1\n    type: ss\n    server: 198.51.100.9\n    port: 8389\n"
+        val overrides = listOf(ConfigGen.RoutingRule("domain-suffix", "ads.example", "REJECT"))
+        val out = ConfigGen.generate(settings, profiles, "c10", overrides = overrides) { userYaml }
+
+        val lanIdx = out.indexOf("IP-CIDR,10.0.0.0/8,DIRECT,no-resolve")
+        val overrideIdx = out.indexOf("DOMAIN-SUFFIX,ads.example,REJECT")
+        val matchIdx = out.indexOf("MATCH,")
+        assertTrue(lanIdx != -1 && overrideIdx != -1 && matchIdx != -1)
+        assertTrue(lanIdx < overrideIdx)
+        assertTrue(overrideIdx < matchIdx)
+    }
+
+    @Test
+    fun `blank override patterns and targets never render`() {
+        val rules = ConfigGen.overrideRules(
+            listOf(
+                ConfigGen.RoutingRule("domain-suffix", "  ", "DIRECT"),
+                ConfigGen.RoutingRule("domain-suffix", "ok.example", "  "),
+                ConfigGen.RoutingRule("domain-suffix", " kept.example ", "DIRECT"),
+            ),
+        )
+        assertEquals(listOf("DOMAIN-SUFFIX,kept.example,DIRECT"), rules)
+    }
 }

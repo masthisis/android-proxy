@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -50,9 +51,15 @@ import java.util.Date
  * Profiles screen (issue #11): list + add-from-URL + clipboard import +
  * activate + refresh + delete. Windows Profiles.vue parity on a phone form
  * factor; sync status + error badge per profile.
+ *
+ * Issue #17: an edit action per card opens the raw YAML editor for the
+ * profile.
  */
 @Composable
-fun ProfilesScreen(vm: ProfileViewModel = viewModel()) {
+fun ProfilesScreen(
+    onEditProfile: (String) -> Unit = {},
+    vm: ProfileViewModel = viewModel(),
+) {
     val profiles by vm.profiles.collectAsState()
     val progress by vm.progress.collectAsState()
     var showAdd by remember { mutableStateOf(false) }
@@ -111,6 +118,7 @@ fun ProfilesScreen(vm: ProfileViewModel = viewModel()) {
                         active = record.id == vm.activeId,
                         onActivate = { vm.activate(record.id) },
                         onRefresh = { vm.refresh(record.id) },
+                        onEdit = { onEditProfile(record.id) },
                         onDelete = { vm.remove(record.id) },
                     )
                 }
@@ -145,6 +153,7 @@ private fun ProfileCard(
     active: Boolean,
     onActivate: () -> Unit,
     onRefresh: () -> Unit,
+    onEdit: () -> Unit,
     onDelete: () -> Unit,
 ) {
     Card(
@@ -195,6 +204,9 @@ private fun ProfileCard(
             Row(modifier = Modifier.align(Alignment.End)) {
                 IconButton(onClick = onRefresh) {
                     Icon(Icons.Filled.Refresh, contentDescription = stringResource(R.string.profiles_refresh))
+                }
+                IconButton(onClick = onEdit) {
+                    Icon(Icons.Filled.Edit, contentDescription = stringResource(R.string.yaml_editor_title))
                 }
                 IconButton(onClick = onDelete) {
                     Icon(

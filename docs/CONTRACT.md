@@ -51,7 +51,7 @@ codebases stay conceptually identical.
 | Service | Methods |
 | --- | --- |
 | `EngineService` | `status`, `start`, `stop`, `restart` — state machine `stopped → starting → running ⇄ updating`, `failed` terminal |
-| `ProfileService` | `list`, `addFromUrl`, `addFromText`, `addFromFile`, `update`, `remove`, `setActive`, `rename`, `setInterval`, `nodes` |
+| `ProfileService` | `list`, `addFromUrl`, `addFromText`, `addFromFile`, `update`, `remove`, `setActive`, `rename`, `setInterval`, `nodes`, `getRaw`, `updateRaw` (raw YAML editor, issue #17: validate-before-write, atomic, hot re-apply for the active profile) |
 | `ProxyService` | `groups`, `selectProxy`, `testGroup`, `testAllNodes`, `testNode`, `mode`/`setMode`, `rules`, `closeConnection`, `closeAllConnections` |
 | `TestService` | `speedTest`, `speedTestQueue`, `cancelSpeedTest`, `speedHistory`, `latencyHistory`, `testProfileLatency` |
 | `SettingsService` | `get`, `save` (sanitized) |

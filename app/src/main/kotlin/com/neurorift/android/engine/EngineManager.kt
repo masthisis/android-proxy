@@ -82,6 +82,7 @@ class EngineManager(
             profiles = profilesProvider(),
             activeId = activeIdProvider(),
             contentOf = ::readProfileContent,
+            overrides = settings.routingOverrides,
         )
         writeConfig(yaml)
         val wasRunning = EngineHolder.status.value.state == EngineState.RUNNING
@@ -109,6 +110,7 @@ class EngineManager(
             profiles = profilesProvider(),
             activeId = activeIdProvider(),
             contentOf = ::readProfileContent,
+            overrides = settings.routingOverrides,
         )
         writeConfig(yaml)
         val ok = restClient.putConfig(configPath().absolutePath)

@@ -12,11 +12,15 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -36,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -45,9 +50,10 @@ import com.neurorift.android.settings.Settings
 
 /**
  * Settings surface (issue #14): grouped sections mirroring the Windows
- * Settings view (General / Mode / Ports / Test / DNS / TUN / Subscription /
- * Log / Updates / Split tunneling / About). Edits buffer locally; Save runs
- * the sanitize → persist → engine re-apply pipeline.
+ * Settings view (General / Mode / Routing / Ports / Test / DNS / TUN /
+ * Subscription / Log / Updates / Split tunneling / About). Edits buffer
+ * locally; Save runs the sanitize → persist → engine re-apply pipeline.
+ * The Routing section (#17) manages the per-domain routing overrides.
  */
 @Composable
 fun SettingsScreen(
@@ -68,6 +74,7 @@ fun SettingsScreen(
 
     // Edit buffer — null until the persisted doc arrives.
     var draft by rememberSaveable(current == null) { mutableStateOf(current ?: Settings()) }
+    var showRoutingDialog by rememberSaveable { mutableStateOf(false) }
 
     if (current == null) return
 
@@ -103,6 +110,59 @@ fun SettingsScreen(
                     selected = draft.mode,
                     onSelect = { draft = draft.copy(mode = it) },
                 )
+            }
+
+            SectionCard(stringResource(R.string.settings_section_routing)) {
+                if (draft.routingOverrides.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.routing_empty),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                draft.routingOverrides.forEachIndexed { index, override ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = override.pattern,
+                                style = MaterialTheme.typography.bodyMedium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            Text(
+                                text = "→ ${override.target}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                        FilterChip(
+                            selected = false,
+                            onClick = {},
+                            label = { Text(override.type) },
+                        )
+                        IconButton(
+                            onClick = {
+                                draft = draft.copy(
+                                    routingOverrides = draft.routingOverrides.filterIndexed { i, _ -> i != index },
+                                )
+                            },
+                        ) {
+                            Icon(
+                                Icons.Filled.Delete,
+                                contentDescription = stringResource(R.string.routing_delete),
+                                tint = MaterialTheme.colorScheme.error,
+                            )
+                        }
+                    }
+                }
+                OutlinedButton(
+                    onClick = { showRoutingDialog = true },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(stringResource(R.string.routing_add))
+                }
             }
 
             SectionCard(stringResource(R.string.settings_section_ports)) {
@@ -258,6 +318,23 @@ fun SettingsScreen(
         }
 
         SnackbarHost(hostState = snackbar)
+    }
+
+    if (showRoutingDialog) {
+        RoutingOverrideDialog(
+            title = stringResource(R.string.routing_add),
+            onDismiss = { showRoutingDialog = false },
+            onConfirm = { pattern, type, target ->
+                showRoutingDialog = false
+                draft = draft.copy(
+                    routingOverrides = draft.routingOverrides + Settings.RoutingOverride(
+                        pattern = pattern,
+                        type = type,
+                        target = target,
+                    ),
+                )
+            },
+        )
     }
 }
 

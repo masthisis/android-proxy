@@ -373,6 +373,65 @@ class ProfileManager(
         return builder.toString()
     }
 
+    // ------------------------------------------------------------- raw editor --
+
+    /**
+     * Raw profile file content for the YAML editor (issue #17): the
+     * materialized Clash YAML (CLASH/LOCAL) or the provider file (NODES,
+     * read-only view). Null for unknown profiles / missing files.
+     */
+    fun getRaw(profileId: String): String? {
+        load()
+        val record = registry.firstOrNull { it.id == profileId } ?: return null
+        val path = when (record.kind) {
+            ProfileKind.NODES -> record.providerPath
+            else -> record.rawPath
+        } ?: return null
+        val file = File(dataDir, path)
+        if (!file.exists()) return null
+        return runCatching { file.readText() }.getOrNull()
+    }
+
+    /**
+     * Validates + atomically rewrites the profile's raw YAML (issue #17).
+     * Validation runs BEFORE the write ([YamlLint]); nothing is persisted on
+     * a failing document. Only CLASH/LOCAL profiles are editable — NODES
+     * profiles are materialized provider files owned by the decode pipeline.
+     *
+     * Returns an empty list on success, otherwise the validation issues as
+     * "line X: <problem>" strings. After a successful write the ACTIVE
+     * profile triggers the engine callback (guarded on a running tunnel) so
+     * the change hot-applies without dropping the connection.
+     */
+    suspend fun updateRaw(profileId: String, content: String): List<String> =
+        withContext(Dispatchers.IO) {
+            load()
+            val record = registry.firstOrNull { it.id == profileId }
+            if (record == null) return@withContext listOf("unknown profile")
+            if (record.kind == ProfileKind.NODES) {
+                return@withContext listOf("nodes-kind profiles are read-only (provider file)")
+            }
+            val rawPath = record.rawPath
+                ?: return@withContext listOf("profile has no raw file")
+            val issues = YamlLint.lint(content)
+            if (issues.isNotEmpty()) {
+                return@withContext issues.map { YamlLint.format(it) }
+            }
+            lock.withLock {
+                val file = File(dataDir, rawPath)
+                file.parentFile?.mkdirs()
+                // Atomic write: temp file + rename (Windows xjson parity).
+                val tmp = File(file.parentFile, file.name + ".tmp")
+                tmp.writeText(content)
+                if (!tmp.renameTo(file)) {
+                    file.writeText(tmp.readText())
+                    tmp.delete()
+                }
+            }
+            if (record.id == activeId) applyEngine("profile raw edit")
+            emptyList()
+        }
+
     // -------------------------------------------------------------- events --
 
     private fun emitProgress(profileId: String?, phase: String, detail: String) {

@@ -1,5 +1,6 @@
 package com.neurorift.android.settings
 
+import com.neurorift.android.engine.ConfigGen
 import com.neurorift.android.engine.EngineSettings
 
 /**
@@ -23,4 +24,14 @@ fun Settings.toEngineSettings(): EngineSettings = EngineSettings(
     speedUploadUrl = test.speedUploadUrl,
     dnsOverride = dns.override,
     dnsNameservers = dns.nameservers,
+    routingOverrides = routingRules(),
 )
+
+/**
+ * Routing overrides (#17) mapped onto the neutral engine-side rule shape —
+ * the settings layer owns the persisted document; the engine only sees
+ * [ConfigGen.RoutingRule] values, keeping the dependency direction clean.
+ */
+fun Settings.routingRules(): List<ConfigGen.RoutingRule> = routingOverrides.map {
+    ConfigGen.RoutingRule(type = it.type, pattern = it.pattern, target = it.target)
+}

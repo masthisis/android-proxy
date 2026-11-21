@@ -78,6 +78,22 @@
     <string name="logs_empty">No log lines yet — connect to see the core stream.</string>
     <string name="rules_search">Search rules</string>
     <string name="rules_empty">No rules loaded — connect with an active profile.</string>
+    <!-- Routing overrides (#17) -->
+    <string name="settings_section_routing">Routing</string>
+    <string name="routing_add">Add rule</string>
+    <string name="routing_delete">Remove rule</string>
+    <string name="routing_pattern">Pattern (domain / process)</string>
+    <string name="routing_type">Type</string>
+    <string name="routing_target">Target (DIRECT / group)</string>
+    <string name="routing_empty">No custom rules yet — profile rules decide the traffic.</string>
+    <string name="connections_route_host">Route this host</string>
+    <!-- Raw profile YAML editor (#17) -->
+    <string name="yaml_editor_title">YAML editor</string>
+    <string name="yaml_validate">Validate</string>
+    <string name="yaml_save">Save</string>
+    <string name="yaml_saved">Saved successfully.</string>
+    <string name="yaml_readonly">Node-list profiles are read-only (provider file).</string>
+    <string name="yaml_no_issues">No issues found.</string>
     <!-- Settings (#14) -->
     <string name="settings_section_general">General</string>
     <string name="settings_start_on_boot">Start VPN on boot</string>

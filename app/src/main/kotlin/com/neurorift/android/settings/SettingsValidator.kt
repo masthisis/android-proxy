@@ -22,12 +22,14 @@ object SettingsValidator {
     const val SPEED_MAX_MB_MAX = 1024
     const val FAILOVER_INTERVAL_MIN = 15
     const val STRIKES_MAX = 10
+    const val ROUTING_OVERRIDES_MAX = 200
 
     private val LANGUAGES = setOf("system", "en", "fa")
     private val MODES = setOf("rule", "global", "direct")
     private val TUN_STACKS = setOf("system", "gvisor", "mixed")
     private val LOG_LEVELS = setOf("debug", "info", "warning", "error", "silent")
     private val SPLIT_MODES = setOf("allowlist", "denylist", "off")
+    private val ROUTING_TYPES = setOf("domain-suffix", "domain", "domain-keyword", "domain-regex", "process-name")
 
     /** Result of a save: the sanitized document + count of applied fixes. */
     data class Sanitized(val settings: Settings, val fixes: List<String>)
@@ -103,6 +105,24 @@ object SettingsValidator {
             bypassDomains = s.bypassDomains.map { it.trim() }.filter { it.isNotEmpty() },
             splitTunneling = s.splitTunneling.copy(apps = s.splitTunneling.apps.filter { it.isNotBlank() }.distinct()),
         )
+
+        // Routing overrides (#17): trim pattern/target, drop blank entries,
+        // normalize the type into the known set and cap the list size.
+        val overrides = s.routingOverrides.mapNotNull { override ->
+            val pattern = override.pattern.trim()
+            val target = override.target.trim()
+            if (pattern.isEmpty() || target.isEmpty()) return@mapNotNull null
+            val type = override.type.trim().lowercase()
+            override.copy(
+                pattern = pattern,
+                target = target,
+                type = if (type in ROUTING_TYPES) type else "domain-suffix",
+            )
+        }
+        if (overrides.size > ROUTING_OVERRIDES_MAX) {
+            fixes.add("routingOverrides.count")
+        }
+        s = s.copy(routingOverrides = overrides.take(ROUTING_OVERRIDES_MAX))
 
         return Sanitized(settings = s, fixes = fixes)
     }
