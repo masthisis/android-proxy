@@ -19,6 +19,7 @@ import com.neurorift.android.engine.EngineHolder
 import com.neurorift.android.engine.EngineManager
 import com.neurorift.android.engine.EngineSettings
 import com.neurorift.android.engine.EngineState
+import com.neurorift.android.profile.ProfileRegistry
 import com.neurorift.android.settings.AppFilter
 import com.neurorift.android.settings.SettingsStore
 import com.neurorift.android.settings.toEngineSettings
@@ -69,8 +70,8 @@ class TunService : VpnService() {
         engine ?: EngineManager(
             coreHome = CoreBridge.coreHome(this),
             settingsProvider = { engineSettings() },
-            profilesProvider = { ProfileRegistry.meta() },
-            activeIdProvider = { ProfileRegistry.activeId() },
+            profilesProvider = { ProfileRegistry.meta(this@TunService) },
+            activeIdProvider = { ProfileRegistry.activeId(this@TunService) },
         ).also { engine = it }
 
     // ---------------------------------------------------------------------
