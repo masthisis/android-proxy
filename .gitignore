@@ -1,0 +1,30 @@
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+### Kotlin ###
+.kotlin
+
+### Android ###
+local.properties
+*.jks
+*.keystore
+!debug.keystore.example
+
+### Go / gomobile ###
+core/build/
+*.aar
+gomobile-cache/
+
+### Logs / OS ###
+*.log
+.DS_Store
