@@ -6,6 +6,19 @@ is [SemVer](https://semver.org/). Releases are cut from `main` tags.
 
 ## [Unreleased]
 
+### Changed
+
+- **Proton VPN visual identity** (issue #34): the app adopts the Proton VPN
+  Android design language — fixed brand palette (accent violet `#6D4AFF`,
+  connected green `#27DDB1`/`#1C9C7C`, alert red `#DC3251`, disconnected
+  pink `#F08FA4`, dark layering `#0C0C14 → #1C1B24 → #292733`; token values
+  referenced from the official ProtonVPN/android-app colors.xml), dynamic
+  Material You color removed, Proton-style Home (status headline, 220dp
+  circular connect button with pulse while connecting, active-profile card),
+  restyled top bar, bottom navigation (globe icon for Proxies) and Profiles
+  cards (20dp rounded, violet active border, violet FABs). All new strings
+  land in EN + FA.
+
 ### Added
 
 - Repository bootstrap: Gradle 9.6 + AGP 9.5 + Kotlin 2.4 project skeleton,

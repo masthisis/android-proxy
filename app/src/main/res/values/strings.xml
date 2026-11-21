@@ -36,4 +36,10 @@
     <string name="profiles_name_label">Name (optional)</string>
     <string name="profiles_add">Add</string>
     <string name="profiles_cancel">Cancel</string>
+    <!-- Proton-style home (#34) -->
+    <string name="home_disconnected">You are not connected</string>
+    <string name="home_connected_hint">Your traffic is protected through the tunnel.</string>
+    <string name="home_idle_hint">Tap the button to connect the VPN.</string>
+    <string name="home_active_profile">ACTIVE PROFILE</string>
+    <string name="home_no_profile">No profile selected — add one under Profiles</string>
 </resources>
