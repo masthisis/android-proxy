@@ -36,6 +36,11 @@
     <string name="profiles_name_label">Name (optional)</string>
     <string name="profiles_add">Add</string>
     <string name="profiles_cancel">Cancel</string>
+    <!-- Subscription auto-update (#18) -->
+    <string name="profiles_update_all">Update all</string>
+    <string name="profiles_summary">updated %1$d · failed %2$d · skipped %3$d</string>
+    <string name="profiles_next_update">next: %1$s</string>
+    <string name="profiles_scheduler_error">Subscription auto-update failed: %1$s</string>
     <!-- Proton-style home (#34) -->
     <string name="home_disconnected">You are not connected</string>
     <string name="home_connected_hint">Your traffic is protected through the tunnel.</string>

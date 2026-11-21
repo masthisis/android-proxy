@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -44,6 +45,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.neurorift.android.R
 import com.neurorift.android.profile.ProfileManager
 import com.neurorift.android.profile.ProfileViewModel
+import com.neurorift.android.profile.ScheduleMath
 import java.text.DateFormat
 import java.util.Date
 
@@ -53,7 +55,8 @@ import java.util.Date
  * factor; sync status + error badge per profile.
  *
  * Issue #17: an edit action per card opens the raw YAML editor for the
- * profile.
+ * profile. Issue #18: Update All action with an outcome summary row and a
+ * per-card "next update" time for interval-managed subscriptions.
  */
 @Composable
 fun ProfilesScreen(
@@ -62,6 +65,7 @@ fun ProfilesScreen(
 ) {
     val profiles by vm.profiles.collectAsState()
     val progress by vm.progress.collectAsState()
+    val summary by vm.summary.collectAsState()
     var showAdd by remember { mutableStateOf(false) }
     val clipboard = LocalClipboardManager.current
 
@@ -96,6 +100,18 @@ fun ProfilesScreen(
                 .padding(padding)
                 .padding(horizontal = 16.dp),
         ) {
+            // --- Update All (#18) -------------------------------------------
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(top = 8.dp),
+            ) {
+                FilledTonalButton(
+                    onClick = { vm.updateAll() },
+                    enabled = profiles.isNotEmpty(),
+                ) {
+                    Text(stringResource(R.string.profiles_update_all))
+                }
+            }
             progress?.let {
                 Text(
                     text = "${it.phase}: ${it.detail}",
@@ -106,6 +122,14 @@ fun ProfilesScreen(
                         MaterialTheme.colorScheme.onSurfaceVariant
                     },
                     modifier = Modifier.padding(vertical = 8.dp),
+                )
+            }
+            summary?.let { s ->
+                Text(
+                    text = stringResource(R.string.profiles_summary, s.updated, s.failed, s.skipped),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 8.dp),
                 )
             }
             LazyColumn(
@@ -145,6 +169,16 @@ fun ProfilesScreen(
             },
         )
     }
+}
+
+@Composable
+private fun nextUpdateLabel(record: ProfileManager.ProfileRecord): String? {
+    if (record.intervalH <= 0 || record.lastSyncAt <= 0) return null
+    val next = Date(ScheduleMath.nextUpdateAt(record.lastSyncAt, record.intervalH))
+    return stringResource(
+        R.string.profiles_next_update,
+        DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(next),
+    )
 }
 
 @Composable
@@ -192,6 +226,8 @@ private fun ProfileCard(
                         DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
                             .format(Date(it))
                     },
+                    // Next scheduled sync for interval-managed subscriptions (#18).
+                    nextUpdateLabel(record),
                     record.lastError?.let { "⚠ $it" },
                 ).joinToString(" · "),
                 style = MaterialTheme.typography.bodySmall,

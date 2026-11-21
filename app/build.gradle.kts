@@ -158,6 +158,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.service)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.work.runtime)
     implementation(libs.okhttp)
     implementation(libs.snakeyaml)
     implementation(libs.kotlinx.serialization.json)
