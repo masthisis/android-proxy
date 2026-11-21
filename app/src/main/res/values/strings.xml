@@ -136,6 +136,16 @@
     <string name="settings_section_updates">Updates</string>
     <string name="settings_updates_auto">Check for updates automatically</string>
     <string name="settings_updates_prerelease">Include pre-releases</string>
+    <!-- In-app self-update (#20) -->
+    <string name="update_check_now">Check now</string>
+    <string name="update_checking">Checking for updates…</string>
+    <string name="update_available">Update available: %1$s</string>
+    <string name="update_none">You are on the latest version</string>
+    <string name="update_download">Downloading update…</string>
+    <string name="update_ready">Ready to install</string>
+    <string name="update_install">Install</string>
+    <string name="update_failed">Update failed: %1$s</string>
+    <string name="update_banner">App update</string>
     <string name="settings_section_split">Split tunneling</string>
     <string name="settings_split_pick">Choose apps</string>
     <string name="settings_section_about">About</string>

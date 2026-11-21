@@ -53,6 +53,7 @@ import com.neurorift.android.ui.cockpit.CockpitViewModel
 import com.neurorift.android.ui.cockpit.TrafficCard
 import com.neurorift.android.ui.theme.ProtonViolet
 import com.neurorift.android.ui.theme.DisconnectedPink
+import com.neurorift.android.ui.update.UpdateBanner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 
@@ -155,6 +156,9 @@ fun DashboardScreen(
                 modifier = Modifier.padding(start = 10.dp),
             )
         }
+
+        // --- Self-update banner (#20): only rendered while relevant --------
+        UpdateBanner()
 
         Spacer(Modifier.height(40.dp))
 

@@ -47,6 +47,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.neurorift.android.AppInfo
 import com.neurorift.android.R
 import com.neurorift.android.settings.Settings
+import com.neurorift.android.update.UpdateState
+import com.neurorift.android.update.UpdateViewModel
 
 /**
  * Settings surface (issue #14): grouped sections mirroring the Windows
@@ -54,6 +56,7 @@ import com.neurorift.android.settings.Settings
  * Subscription / Log / Updates / Split tunneling / About). Edits buffer
  * locally; Save runs the sanitize → persist → engine re-apply pipeline.
  * The Routing section (#17) manages the per-domain routing overrides.
+ * The Updates section (#20) adds Check now + the updater status line.
  */
 @Composable
 fun SettingsScreen(
@@ -75,6 +78,8 @@ fun SettingsScreen(
     // Edit buffer — null until the persisted doc arrives.
     var draft by rememberSaveable(current == null) { mutableStateOf(current ?: Settings()) }
     var showRoutingDialog by rememberSaveable { mutableStateOf(false) }
+    val updateVm: UpdateViewModel = viewModel()
+    val updateState by updateVm.state.collectAsStateWithLifecycle()
 
     if (current == null) return
 
@@ -273,6 +278,31 @@ fun SettingsScreen(
                     checked = draft.updates.includePrerelease,
                     onChange = { draft = draft.copy(updates = draft.updates.copy(includePrerelease = it)) },
                 )
+                OutlinedButton(
+                    onClick = { updateVm.checkNow() },
+                    enabled = updateState !is UpdateState.Checking && updateState !is UpdateState.Downloading,
+                ) {
+                    Text(stringResource(R.string.update_check_now))
+                }
+                updateState?.let { state ->
+                    Text(
+                        text = updateStatusLine(state),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = when (state) {
+                            is UpdateState.Error -> MaterialTheme.colorScheme.error
+                            is UpdateState.Available, is UpdateState.Ready -> MaterialTheme.colorScheme.primary
+                            else -> MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                    )
+                }
+                if (updateState is UpdateState.Ready) {
+                    Button(
+                        onClick = { updateVm.install() },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(R.string.update_install))
+                    }
+                }
             }
 
             SectionCard(stringResource(R.string.settings_section_split)) {
@@ -336,6 +366,22 @@ fun SettingsScreen(
             },
         )
     }
+}
+
+@Composable
+private fun updateStatusLine(state: UpdateState): String = when (state) {
+    is UpdateState.Checking -> stringResource(R.string.update_checking)
+    is UpdateState.Available -> stringResource(R.string.update_available, state.version)
+    is UpdateState.None -> stringResource(R.string.update_none)
+    is UpdateState.Downloading -> stringResource(R.string.update_download) +
+        if (state.totalBytes > 0) {
+            " (${state.bytesRead / 1_000} / ${state.totalBytes / 1_000} KB)"
+        } else {
+            ""
+        }
+    is UpdateState.Ready -> stringResource(R.string.update_ready)
+    is UpdateState.Error -> stringResource(R.string.update_failed, state.message)
+    is UpdateState.Idle -> AppInfo.fullVersion()
 }
 
 @Composable
