@@ -190,6 +190,8 @@ fun TestScreen(vm: TestCenterViewModel = viewModel()) {
 
         Spacer(Modifier.height(8.dp))
 
+        FailoverCard()
+
         // --- Node cards -----------------------------------------------------
         val search = state.search.trim()
         val rows = state.nodes.keys
