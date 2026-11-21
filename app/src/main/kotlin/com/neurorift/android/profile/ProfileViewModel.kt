@@ -87,15 +87,29 @@ class ProfileViewModel(app: Application) : AndroidViewModel(app) {
         activeId = manager.activeId()
     }
 
-    fun addFromUrl(url: String, name: String?) {
+    fun addFromUrl(
+        url: String,
+        name: String?,
+        userAgent: String? = null,
+        extraHeaders: Map<String, String> = emptyMap(),
+    ) {
         viewModelScope.launch(Dispatchers.IO) {
             // New URL imports inherit the subscription.defaultIntervalH
             // default so the auto-update scheduler owns them (#18).
             val interval = runCatching {
                 SettingsStore.shared(getApplication()).get().subscription.defaultIntervalH
             }.getOrDefault(0)
-            runCatching { manager.addFromUrl(url, name, intervalH = interval) }
-                .onSuccess { refreshList() }
+            runCatching {
+                manager.addFromUrl(
+                    url,
+                    name,
+                    intervalH = interval,
+                    // #24: per-profile fetch headers ride the import and
+                    // persist for update/updateAll.
+                    userAgent = userAgent,
+                    extraHeaders = extraHeaders,
+                )
+            }.onSuccess { refreshList() }
         }
     }
 
@@ -114,6 +128,12 @@ class ProfileViewModel(app: Application) : AndroidViewModel(app) {
     /** Union membership toggle (#23): joins/leaves the union routing set. */
     fun setUnionActive(id: String, active: Boolean) {
         manager.setUnionActive(id, active)
+        refreshList()
+    }
+
+    /** Per-profile fetch headers (#24): UA + custom headers for every fetch. */
+    fun setFetchHeaders(id: String, headers: Map<String, String>) {
+        manager.setFetchHeaders(id, headers)
         refreshList()
     }
 

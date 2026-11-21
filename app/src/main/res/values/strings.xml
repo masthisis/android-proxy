@@ -44,6 +44,12 @@
     <!-- Subscription union (#23) -->
     <string name="profiles_union">union</string>
     <string name="profiles_union_toggle">Subscription union — route as one set</string>
+    <!-- Subscription fetch headers (#24) -->
+    <string name="profiles_user_agent">User-Agent (optional)</string>
+    <string name="profiles_headers">Headers (optional)</string>
+    <string name="profiles_headers_hint">Name: Value per line</string>
+    <string name="profiles_edit_headers">Headers…</string>
+    <string name="profiles_headers_save">Save</string>
     <!-- Proton-style home (#34) -->
     <string name="home_disconnected">You are not connected</string>
     <string name="home_connected_hint">Your traffic is protected through the tunnel.</string>
