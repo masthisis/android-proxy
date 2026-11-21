@@ -37,6 +37,19 @@ is [SemVer](https://semver.org/). Releases are cut from `main` tags.
   accumulation, success resets, the strikes+cooldown switch gate and the
   best-delay candidate pick with a virtual clock; all strings land in
   EN + FA.
+- **Subscription auto-update + Update All** (issue #18): a WorkManager-backed
+  scheduler (`SubscriptionScheduler`) enqueues the unique 30-minute periodic
+  `subscription-sync` scan (KEEP policy, network-connected constraint) plus an
+  expedited one-shot for immediate kicks; the worker refreshes every profile
+  whose `intervalH` interval is due through the pure, JVM-tested
+  `ScheduleMath` due check (deterministic ±10%-band jitter derived from the
+  last sync — never later than the plain interval, never-synced profiles are
+  immediately due). URL imports now inherit `subscription.defaultIntervalH`
+  and fetches honour `subscription.updateViaProxy` through the app's own
+  mixed inbound (injectable `proxyProvider` on the manager). Profiles gains
+  an Update All action — parallel refresh of every URL-sourced profile with
+  bounded concurrency 4, an `updated X · failed Y · skipped Z` summary row
+  and a per-card "next" sync time; all strings land in EN + FA.
 - **Test Center** (issue #15): the Test tab grows into a real throughput
   lab — multi-stream download + upload speed tests routed through the
   hidden `⚡ NR SpeedTest` selector and its dedicated listener (node select

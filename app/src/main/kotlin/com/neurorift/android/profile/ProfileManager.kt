@@ -8,15 +8,31 @@ import com.neurorift.android.engine.Events
 import com.neurorift.android.engine.EventBus
 import com.neurorift.android.engine.SubPhase
 import java.io.File
+import java.net.InetSocketAddress
+import java.net.Proxy
+import java.time.Duration
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.Request
+
+/**
+ * HTTP proxy endpoint subscription fetches are routed through when the
+ * `subscription.updateViaProxy` setting is on (#18) — the app's own local
+ * mixed inbound, so subscription traffic follows the tunnel like everything
+ * else.
+ */
+data class ProxyConfig(val host: String, val port: Int)
 
 /**
  * Subscription/profile registry and materializer — the Android port of the
@@ -37,6 +53,8 @@ import okhttp3.Request
 class ProfileManager(
     private val dataDir: File,
     private val engine: suspend (reason: String) -> Boolean,
+    /** Returns the proxy for subscription fetches, or null to fetch direct (#18). */
+    private val proxyProvider: (() -> ProxyConfig?)? = null,
 ) {
 
     @Serializable
@@ -61,10 +79,41 @@ class ProfileManager(
     private val registry = mutableListOf<ProfileRecord>()
     private var loaded = false
     private var activeId: String? = null
-    private val fetchClient = OkHttpClient.Builder()
-        .connectTimeout(java.time.Duration.ofSeconds(15))
-        .readTimeout(java.time.Duration.ofSeconds(30))
-        .build()
+
+    @Volatile
+    private var directClient: OkHttpClient? = null
+
+    @Volatile
+    private var proxyClient: OkHttpClient? = null
+
+    @Volatile
+    private var proxyClientKey: String? = null
+
+    /**
+     * Fetch client for subscription downloads — direct by default, through
+     * the configured HTTP proxy when [proxyProvider] supplies one (cached
+     * per host:port so a settings change rebuilds it lazily).
+     */
+    private fun fetchClient(): OkHttpClient {
+        val config = proxyProvider?.invoke()
+        if (config == null) {
+            return directClient ?: OkHttpClient.Builder()
+                .connectTimeout(Duration.ofSeconds(15))
+                .readTimeout(Duration.ofSeconds(30))
+                .build()
+                .also { directClient = it }
+        }
+        val key = "${config.host}:${config.port}"
+        proxyClient?.takeIf { proxyClientKey == key }?.let { return it }
+        val client = OkHttpClient.Builder()
+            .connectTimeout(Duration.ofSeconds(15))
+            .readTimeout(Duration.ofSeconds(30))
+            .proxy(Proxy(Proxy.Type.HTTP, InetSocketAddress(config.host, config.port)))
+            .build()
+        proxyClient = client
+        proxyClientKey = key
+        return client
+    }
 
     // ---------------------------------------------------------------- store --
 
@@ -158,17 +207,26 @@ class ProfileManager(
 
     // ---------------------------------------------------------------- import --
 
-    /** Import from a subscription URL; fetch happens direct (via-proxy arrives with #14 settings). */
-    suspend fun addFromUrl(url: String, name: String? = null): ProfileRecord = withContext(Dispatchers.IO) {
+    /**
+     * Import from a subscription URL. [intervalH] applies the
+     * `subscription.defaultIntervalH` setting at import time (#18) so the
+     * auto-update scheduler owns the profile from day one.
+     */
+    suspend fun addFromUrl(
+        url: String,
+        name: String? = null,
+        intervalH: Int = 0,
+    ): ProfileRecord = withContext(Dispatchers.IO) {
         emitProgress(null, SubPhase.FETCHING, url)
         val body = fetch(url)
-        addFromText(body, name, sourceUrl = url)
+        addFromText(body, name, sourceUrl = url, intervalH = intervalH)
     }
 
     suspend fun addFromText(
         content: String,
         name: String? = null,
         sourceUrl: String? = null,
+        intervalH: Int = 0,
     ): ProfileRecord = withContext(Dispatchers.IO) {
         emitProgress(null, SubPhase.PARSING, name ?: "content")
         val result = Decode.decode(content)
@@ -191,6 +249,10 @@ class ProfileManager(
                 providerPath = if (kind == ProfileKind.NODES) "providers/sub-$id.yaml" else null,
                 rawPath = if (kind != ProfileKind.NODES) "clash/$id.yaml" else null,
                 sourceUrl = sourceUrl,
+                // URL imports are in sync at import time — the scheduler's
+                // "never synced => due" rule must not re-fetch them (#18).
+                intervalH = intervalH.coerceIn(0, 168),
+                lastSyncAt = if (sourceUrl.isNullOrEmpty()) 0L else System.currentTimeMillis(),
                 nodeCount = result.nodes.size,
             )
             writeProfileFile(record, content)
@@ -219,7 +281,7 @@ class ProfileManager(
         val request = Request.Builder().url(url)
             .header("User-Agent", "NeuroRift-Android/1.0")
             .build()
-        return fetchClient.newCall(request).execute().use { resp ->
+        return fetchClient().newCall(request).execute().use { resp ->
             if (!resp.isSuccessful) throw IllegalArgumentException("subscription fetch failed: HTTP ${resp.code}")
             resp.body.string()
         }
@@ -279,7 +341,7 @@ class ProfileManager(
      * the materialized file -> hot provider swap (PUT /providers/proxies) or
      * engine hot reload — connections never drop (ARCHITECTURE §3).
      */
-    suspend fun update(profileId: String, engineManager: suspend () -> Boolean): Boolean =
+    suspend fun update(profileId: String, engineManager: suspend () -> Boolean = { true }): Boolean =
         withContext(Dispatchers.IO) {
             load()
             val record = registry.firstOrNull { it.id == profileId }
@@ -336,6 +398,76 @@ class ProfileManager(
                 false
             }
         }
+
+    /**
+     * Outcome of [updateAll] (issue #18) — the Update All summary row counts.
+     * Partial per-profile results fold together through [plus].
+     */
+    data class UpdateSummary(
+        val updated: Int = 0,
+        val failed: Int = 0,
+        val skipped: Int = 0,
+        val errors: List<String> = emptyList(),
+    ) {
+        /** Folds two partial summaries (counts add, error lists concatenate). */
+        operator fun plus(other: UpdateSummary): UpdateSummary = UpdateSummary(
+            updated = updated + other.updated,
+            failed = failed + other.failed,
+            skipped = skipped + other.skipped,
+            errors = errors + other.errors,
+        )
+    }
+
+    /**
+     * Update All (issue #18): refreshes every URL-sourced profile in
+     * parallel with a bounded concurrency of 4, through the regular
+     * [update] pipeline (fetch → decode → materialize → sub:progress →
+     * profiles:changed). Profiles without a source URL are counted as
+     * skipped — local content has nothing to fetch. Returns the folded
+     * [UpdateSummary]; the last failure detail of each failed profile is
+     * carried in [UpdateSummary.errors] (it is also persisted per profile
+     * as `lastError`).
+     */
+    suspend fun updateAll(): UpdateSummary = withContext(Dispatchers.IO) {
+        load()
+        val candidates = registry.toList()
+        if (candidates.isEmpty()) return@withContext UpdateSummary()
+        val gate = Semaphore(4)
+        val partials = coroutineScope {
+            candidates.map { record ->
+                async {
+                    gate.withPermit {
+                        if (record.sourceUrl.isNullOrEmpty()) {
+                            UpdateSummary(skipped = 1)
+                        } else {
+                            val ok = runCatching { update(record.id) }.getOrElse { false }
+                            if (ok) {
+                                UpdateSummary(updated = 1)
+                            } else {
+                                UpdateSummary(
+                                    failed = 1,
+                                    errors = listOf(
+                                        registry.firstOrNull { it.id == record.id }?.lastError
+                                            ?: "${record.name}: update failed",
+                                    ),
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }.awaitAll()
+        val summary = partials.reduce { acc, part -> acc + part }
+        // One final, whole-run progress tick + a registry refresh so the UI
+        // summary row and the per-card sync states settle together.
+        emitProgress(
+            null,
+            SubPhase.DONE,
+            "updated ${summary.updated}, failed ${summary.failed}, skipped ${summary.skipped}",
+        )
+        emitChanged()
+        summary
+    }
 
     // ----------------------------------------------------------------- files --
 

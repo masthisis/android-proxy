@@ -7,6 +7,9 @@ import androidx.lifecycle.viewModelScope
 import com.neurorift.android.engine.EngineHolder
 import com.neurorift.android.engine.EngineRuntime
 import com.neurorift.android.engine.EngineState
+import com.neurorift.android.profile.ProfileManager
+import com.neurorift.android.profile.ProxyConfig
+import com.neurorift.android.settings.SettingsStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -38,6 +41,16 @@ class ProfileViewModel(app: Application) : AndroidViewModel(app) {
                         true
                     }
                 },
+                proxyProvider = {
+                    // updateViaProxy (#18): subscription fetches ride the
+                    // app's own mixed inbound so they follow the tunnel.
+                    val settings = SettingsStore.shared(context.applicationContext).getBlocking()
+                    if (settings.subscription.updateViaProxy) {
+                        ProxyConfig(host = "127.0.0.1", port = settings.ports.mixed)
+                    } else {
+                        null
+                    }
+                },
             ).also { shared = it }
     }
 
@@ -48,6 +61,10 @@ class ProfileViewModel(app: Application) : AndroidViewModel(app) {
 
     private val _progress = MutableStateFlow<ProfileManager.SubProgress?>(null)
     val progress: StateFlow<ProfileManager.SubProgress?> = _progress.asStateFlow()
+
+    /** Update All outcome (issue #18) — null until the first run settles. */
+    private val _summary = MutableStateFlow<ProfileManager.UpdateSummary?>(null)
+    val summary: StateFlow<ProfileManager.UpdateSummary?> = _summary.asStateFlow()
 
     var activeId: String? = manager.activeId()
         private set
@@ -72,7 +89,12 @@ class ProfileViewModel(app: Application) : AndroidViewModel(app) {
 
     fun addFromUrl(url: String, name: String?) {
         viewModelScope.launch(Dispatchers.IO) {
-            runCatching { manager.addFromUrl(url, name) }
+            // New URL imports inherit the subscription.defaultIntervalH
+            // default so the auto-update scheduler owns them (#18).
+            val interval = runCatching {
+                SettingsStore.shared(getApplication()).get().subscription.defaultIntervalH
+            }.getOrDefault(0)
+            runCatching { manager.addFromUrl(url, name, intervalH = interval) }
                 .onSuccess { refreshList() }
         }
     }
@@ -95,6 +117,14 @@ class ProfileViewModel(app: Application) : AndroidViewModel(app) {
                 // Hot provider swap through the engine when running.
                 true
             }
+            refreshList()
+        }
+    }
+
+    /** Update All (#18): parallel refresh of every URL-sourced profile. */
+    fun updateAll() {
+        viewModelScope.launch(Dispatchers.IO) {
+            _summary.value = manager.updateAll()
             refreshList()
         }
     }
