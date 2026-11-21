@@ -47,6 +47,14 @@ is [SemVer](https://semver.org/). Releases are cut from `main` tags.
   pre-write validation, read-only view for nodes-kind provider files, and
   automatic engine hot re-apply for the active profile on a running
   tunnel). All new strings land in EN + FA.
+- **Quick settings tile + boot autostart + notification controls** (issue
+  #19): `VpnTileService` mirrors the engine state (active/inactive/
+  unavailable) and deep-links into the app when the one-time VPN permission
+  is still missing; `BootReceiver` honours `startOnBoot` on
+  BOOT_COMPLETED / MY_PACKAGE_REPLACED (system Always-on VPN precedence
+  respected); the foreground notification gains a mode-cycle action
+  (rule → global → direct, persisted + live-patched) next to Disconnect —
+  the Windows tray quick controls on Android.
 - **Release hardening** (issue #21): tag-triggered release workflow gains
   an optional CI keystore (KEYSTORE_BASE64 secret, decoded without printing
   secrets; debug-key fallback stays the local default), plus a release

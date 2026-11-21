@@ -127,4 +127,6 @@
     <string name="settings_core_offline">mihomo core: not connected</string>
     <string name="settings_save">Save settings</string>
     <string name="split_search">Search apps</string>
+    <string name="vpn_action_mode_cycle">Cycle mode</string>
+    <string name="tile_unprepared">Open NeuroRift to grant VPN permission first</string>
 </resources>

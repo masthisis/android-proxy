@@ -127,4 +127,6 @@
     <string name="settings_core_offline">هستهٔ mihomo: متصل نیست</string>
     <string name="settings_save">ذخیرهٔ تنظیمات</string>
     <string name="split_search">جست‌وجوی برنامه‌ها</string>
+    <string name="vpn_action_mode_cycle">تغییر حالت</string>
+    <string name="tile_unprepared">برای اعطای مجوز VPN ابتدا نوروریفت را باز کنید</string>
 </resources>
