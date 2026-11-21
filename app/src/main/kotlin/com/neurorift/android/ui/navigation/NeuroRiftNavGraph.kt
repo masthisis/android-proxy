@@ -31,6 +31,7 @@ import com.neurorift.android.ui.screens.ProfilesScreen
 import com.neurorift.android.ui.screens.RulesScreen
 import com.neurorift.android.ui.settings.SettingsScreen
 import com.neurorift.android.ui.settings.SplitTunnelingScreen
+import com.neurorift.android.ui.test.TestScreen
 
 /**
  * App navigation graph (issue #9). Bottom navigation with five destinations;
@@ -109,6 +110,7 @@ fun NeuroRiftNavGraph(
                         )
                         Destination.Proxies -> ProxiesScreen()
                         Destination.Profiles -> ProfilesScreen()
+                        Destination.Test -> TestScreen()
                         Destination.Settings -> SettingsScreen(
                             onOpenSplitTunneling = { navController.navigate(SecondaryRoute.SPLIT_TUNNELING) },
                         )

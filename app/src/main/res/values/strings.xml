@@ -51,6 +51,20 @@
     <string name="proxies_test_group">Test this group</string>
     <string name="proxies_test_node">Test this node</string>
     <string name="proxies_empty">No groups — connect with an active profile.</string>
+    <!-- Test Center (#15) -->
+    <string name="test_center_title">Test Center</string>
+    <string name="test_center_need_vpn">Connect first to run tests</string>
+    <string name="test_center_need_vpn_hint">Speed and latency tests run against the live engine — start the tunnel from Home.</string>
+    <string name="test_center_preset_100">100 MB</string>
+    <string name="test_center_preset_250">250 MB</string>
+    <string name="test_center_preset_500">500 MB</string>
+    <string name="test_center_preset_max">Max</string>
+    <string name="test_center_run_speed">Run speed test</string>
+    <string name="test_center_cancel">Cancel</string>
+    <string name="test_center_running">Speed test running</string>
+    <string name="test_center_search">Search nodes</string>
+    <string name="test_center_empty">No nodes — connect with an active profile.</string>
+    <string name="test_center_test_all">Test all latencies</string>
     <!-- Live cockpit (#13) -->
     <string name="cockpit_traffic_title">TRAFFIC (60s)</string>
     <string name="cockpit_memory">Core memory</string>
