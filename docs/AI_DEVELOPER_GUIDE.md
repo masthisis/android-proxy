@@ -23,7 +23,7 @@ and extension recipes. Start here before touching the engine.
 8. Verify locally with `./gradlew testDebugUnitTest assembleDebug` before
    pushing; let CI be the second gate, not the first.
 
-## Pitfall catalog (P1–P12)
+## Pitfall catalog (P1–P15)
 
 - **P1 — Streaming endpoints.** `/traffic`, `/logs`, `/memory` are infinite
   streams. Never read them into memory (OkHttp buffering defaults!), always
@@ -65,6 +65,22 @@ and extension recipes. Start here before touching the engine.
 - **P12 — Don't trust your YAML writer.** Generated configs are written with
   insertion-ordered output and asserted by tests; a map-iteration-order
   regression produces flaky diffs.
+
+- **P13 — R8 full mode hates JDK-only libraries.** The v1.0.0-rc.1 release
+  gate failed in `minifyReleaseWithR8`: snakeyaml introspects
+  `java.beans.*` (absent on Android). The fix is a scoped
+  `-dontwarn java.beans.**` in `app/proguard-rules.pro` — never a blanket
+  `-dontwarn **`; the rc tag exists to catch exactly this class of failure.
+- **P14 — DataStore delegates are process-wide.** `preferencesDataStore`
+  delegates MUST be declared top-level (file-private), never inside a class
+  instance — two instances of the same name throw on first access. Also:
+  never block on the store on the main thread; read async (or `getBlocking`
+  only from IO dispatchers inside the VPN service paths).
+- **P15 — Branch pushes can drop their CI events.** Branch names contain
+  `#` (e.g. `feat/#12-...`); a push occasionally creates no `workflow_run`.
+  Don't retry blindly — check the runs list, then trigger CI explicitly via
+  the `workflow_dispatch` of `ci.yml` on that ref. Merging is only allowed
+  on a green, current-head run.
 
 ## Extension recipes
 

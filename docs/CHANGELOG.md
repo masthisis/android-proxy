@@ -106,6 +106,12 @@ is [SemVer](https://semver.org/). Releases are cut from `main` tags.
   the app is backgrounded (5 s idle cadence instead of 1 Hz) and resume
   instantly on foreground; the cheap bookkeeping (traffic atomics, log
   ring) keeps running so reopening the app shows live data immediately.
+- **Documentation suite finalization** (issue #22): FEATURES matrix rows
+  moved from "planned" to shipped (speed tests, sparklines, failover,
+  routing overrides + YAML editor, tile/autostart, self-update, union),
+  AI guide pitfall catalog extended to P1–P15 (R8 java.beans, DataStore
+  process-wide delegates, dropped CI events on `#`-branches), ROADMAP
+  v1.1.0 checked off and the v2 backlog cleaned.
 - **Test Center** (issue #15): the Test tab grows into a real throughput
   lab — multi-stream download + upload speed tests routed through the
   hidden `⚡ NR SpeedTest` selector and its dedicated listener (node select
