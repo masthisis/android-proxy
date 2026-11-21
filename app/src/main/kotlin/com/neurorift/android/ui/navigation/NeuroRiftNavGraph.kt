@@ -29,6 +29,8 @@ import com.neurorift.android.ui.screens.PlaceholderScreen
 import com.neurorift.android.ui.screens.ProxiesScreen
 import com.neurorift.android.ui.screens.ProfilesScreen
 import com.neurorift.android.ui.screens.RulesScreen
+import com.neurorift.android.ui.settings.SettingsScreen
+import com.neurorift.android.ui.settings.SplitTunnelingScreen
 
 /**
  * App navigation graph (issue #9). Bottom navigation with five destinations;
@@ -107,6 +109,9 @@ fun NeuroRiftNavGraph(
                         )
                         Destination.Proxies -> ProxiesScreen()
                         Destination.Profiles -> ProfilesScreen()
+                        Destination.Settings -> SettingsScreen(
+                            onOpenSplitTunneling = { navController.navigate(SecondaryRoute.SPLIT_TUNNELING) },
+                        )
                         else -> PlaceholderScreen(
                             title = stringResource(destination.labelRes),
                             icon = destination.icon,
@@ -123,6 +128,9 @@ fun NeuroRiftNavGraph(
             }
             composable(SecondaryRoute.RULES) {
                 RulesScreen()
+            }
+            composable(SecondaryRoute.SPLIT_TUNNELING) {
+                SplitTunnelingScreen()
             }
         }
     }

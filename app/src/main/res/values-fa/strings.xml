@@ -64,4 +64,37 @@
     <string name="logs_empty">هنوز خطی ثبت نشده — برای دیدن جریان هسته متصل شوید.</string>
     <string name="rules_search">جست‌وجوی قوانین</string>
     <string name="rules_empty">قوانینی بارگذاری نشده — با یک پروفایل فعال متصل شوید.</string>
+    <!-- تنظیمات (مسئلهٔ ۱۴) -->
+    <string name="settings_section_general">عمومی</string>
+    <string name="settings_start_on_boot">اجرای VPN هنگام روشن شدن</string>
+    <string name="settings_allow_lan">اجازهٔ اتصال LAN</string>
+    <string name="settings_section_mode">حالت</string>
+    <string name="settings_section_ports">پورت‌ها</string>
+    <string name="settings_port_mixed">پورت Mixed</string>
+    <string name="settings_port_controller">پورت کنترل</string>
+    <string name="settings_port_speedtest">پورت تست سرعت</string>
+    <string name="settings_section_test">تست</string>
+    <string name="settings_test_url">نشانی تست تأخیر</string>
+    <string name="settings_test_timeout">مهلت تست (میلی‌ثانیه)</string>
+    <string name="settings_speed_streams">جریان‌های تست سرعت</string>
+    <string name="settings_speed_max_mb">سقف تست سرعت (مگابایت)</string>
+    <string name="settings_upload_test">تست سرعت آپلود</string>
+    <string name="settings_section_dns">DNS</string>
+    <string name="settings_dns_override">دگرگونی DNS</string>
+    <string name="settings_dns_nameservers">سرورهای نام (با کاما جدا کنید)</string>
+    <string name="settings_section_tun">TUN</string>
+    <string name="settings_tun_mtu">MTU تانل</string>
+    <string name="settings_section_subscription">اشتراک</string>
+    <string name="settings_sub_interval">بازهٔ به‌روزرسانی پیش‌فرض (ساعت، ۰ = دستی)</string>
+    <string name="settings_sub_via_proxy">به‌روزرسانی اشتراک‌ها از طریق پروکسی</string>
+    <string name="settings_section_log">سطح گزارش</string>
+    <string name="settings_section_updates">به‌روزرسانی‌ها</string>
+    <string name="settings_updates_auto">بررسی خودکار به‌روزرسانی</string>
+    <string name="settings_updates_prerelease">شامل نسخه‌های آزمایشی</string>
+    <string name="settings_section_split">تونل‌گذاری تفکیکی</string>
+    <string name="settings_split_pick">انتخاب برنامه‌ها</string>
+    <string name="settings_section_about">درباره</string>
+    <string name="settings_core_offline">هستهٔ mihomo: متصل نیست</string>
+    <string name="settings_save">ذخیرهٔ تنظیمات</string>
+    <string name="split_search">جست‌وجوی برنامه‌ها</string>
 </resources>
