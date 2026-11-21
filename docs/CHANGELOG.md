@@ -24,6 +24,15 @@ is [SemVer](https://semver.org/). Releases are cut from `main` tags.
 
 ### Added
 
+- **Profiles pipeline** (issue #11): full subscription import (URL,
+  clipboard, local files) with content auto-detection (base64 link lists,
+  plain link lists, Clash YAML with/without groups, sing-box JSON raw or
+  base64-wrapped), every share-link format parsed (vmess/vless+t REALITY/
+  trojan/ss SIP002+legacy+plugins/ssr/hysteria2 port-hopping/tuic v4+v5/
+  anytls/socks/http), sanitize + name dedupe, provider materialization
+  (providers/sub-*.yaml), atomic JSON registry, per-profile sync status +
+  error badge, sub:progress events with never-silent warnings, Profiles
+  screen (EN + FA).
 - **Engine control plane** (issue #10): runtime-config generator (overlay:
   external controller + random secret, mixed port, hidden speed-test group +
   dedicated  listener, store-selected, unified-delay,

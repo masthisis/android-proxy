@@ -24,4 +24,16 @@
     <string name="nav_logs">Logs</string>
     <string name="nav_rules">Rules</string>
     <string name="placeholder_issue_hint">Lands with issue #%1$d</string>
+    <!-- Profiles (#11) -->
+    <string name="profiles_add_url">Add from URL</string>
+    <string name="profiles_import_clipboard">Import from clipboard</string>
+    <string name="profiles_empty">No profiles yet — add a subscription to start.</string>
+    <string name="profiles_active">Active</string>
+    <string name="profiles_nodes">nodes</string>
+    <string name="profiles_refresh">Update subscription</string>
+    <string name="profiles_delete">Delete profile</string>
+    <string name="profiles_url_label">Subscription URL</string>
+    <string name="profiles_name_label">Name (optional)</string>
+    <string name="profiles_add">Add</string>
+    <string name="profiles_cancel">Cancel</string>
 </resources>

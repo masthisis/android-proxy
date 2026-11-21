@@ -24,4 +24,16 @@
     <string name="nav_logs">گزارش‌ها</string>
     <string name="nav_rules">قوانین</string>
     <string name="placeholder_issue_hint">با مسئلهٔ شمارهٔ %1$d ارائه می‌شود</string>
+    <!-- اشتراک‌ها (مسئلهٔ ۱۱) -->
+    <string name="profiles_add_url">افزودن از نشانی</string>
+    <string name="profiles_import_clipboard">وارد کردن از کلیپ‌بورد</string>
+    <string name="profiles_empty">هنوز اشتراکی نیست — برای شروع یک اشتراک اضافه کنید.</string>
+    <string name="profiles_active">فعال</string>
+    <string name="profiles_nodes">نود</string>
+    <string name="profiles_refresh">به‌روزرسانی اشتراک</string>
+    <string name="profiles_delete">حذف اشتراک</string>
+    <string name="profiles_url_label">نشانی اشتراک</string>
+    <string name="profiles_name_label">نام (اختیاری)</string>
+    <string name="profiles_add">افزودن</string>
+    <string name="profiles_cancel">لغو</string>
 </resources>
