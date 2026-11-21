@@ -89,7 +89,9 @@ class SettingsValidatorTest {
     @Test
     fun `default document stays untouched`() {
         val fixed = SettingsValidator.sanitize(Settings()).settings
-        assertEquals(Settings(), fixed)
+        // The secret is random per instance — compare with it normalized.
+        assertEquals(Settings(controllerSecret = fixed.controllerSecret), fixed)
+        assertTrue(fixed.ports.mixed in SettingsValidator.PORT_MIN..SettingsValidator.PORT_MAX)
     }
 
     @Test

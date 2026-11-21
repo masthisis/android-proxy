@@ -28,7 +28,7 @@ class EngineMappingTest {
         assertTrue(yaml.contains("mixed-port: 18097"))
         assertTrue(yaml.contains("external-controller: 127.0.0.1:29097"))
         assertTrue("allow-lan: true" in yaml)
-        assertTrue(yaml.contains("19097")) // speed-test listener port
+        assertTrue(yaml.contains("39097")) // speed-test listener port
     }
 
     @Test
