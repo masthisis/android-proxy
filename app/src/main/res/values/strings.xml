@@ -80,6 +80,11 @@
     <string name="failover_event_switched">Switched %1$s → %2$s</string>
     <string name="failover_event_ok">%1$s OK</string>
     <string name="failover_event_failed">%1$s failed (strike %2$d)</string>
+    <!-- Automatic problem reports (#25) -->
+    <string name="report_crash_title">Something went wrong</string>
+    <string name="report_crash_body">NeuroRift crashed last time. A redacted report (no secrets, tokens or URLs) is ready — open a GitHub issue so we can fix it?</string>
+    <string name="report_crash_open">Report on GitHub</string>
+    <string name="report_crash_dismiss">Dismiss</string>
     <!-- Live cockpit (#13) -->
     <string name="cockpit_traffic_title">TRAFFIC (60s)</string>
     <string name="cockpit_memory">Core memory</string>

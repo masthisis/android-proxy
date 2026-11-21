@@ -80,6 +80,11 @@
     <string name="failover_event_switched">سوییچ از %1$s به %2$s</string>
     <string name="failover_event_ok">%1$s سالم است</string>
     <string name="failover_event_failed">شکست %1$s (خطای شمارهٔ %2$d)</string>
+    <!-- گزارش‌های خودکار مشکل (مسئلهٔ ۲۵) -->
+    <string name="report_crash_title">خطایی رخ داد</string>
+    <string name="report_crash_body">بار آخر نوروریفت کرش کرد. گزارشی پاک‌سازی‌شده (بدون رمز، توکن یا نشانی) آماده است — برای رفع مشکل یک مسئله در گیت‌هاب باز کنید؟</string>
+    <string name="report_crash_open">گزارش در گیت‌هاب</string>
+    <string name="report_crash_dismiss">نادیده گرفتن</string>
     <!-- کنترل‌پنل زنده (مسئلهٔ ۱۳) -->
     <string name="cockpit_traffic_title">ترافیک (۶۰ ثانیه)</string>
     <string name="cockpit_memory">حافظهٔ هسته</string>

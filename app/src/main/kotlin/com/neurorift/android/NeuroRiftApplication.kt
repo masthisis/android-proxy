@@ -2,6 +2,8 @@ package com.neurorift.android
 
 import android.app.Application
 import com.neurorift.android.profile.SubscriptionScheduler
+import com.neurorift.android.report.CrashReporter
+import com.neurorift.android.settings.SettingsStore
 import com.neurorift.android.update.UpdateService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -17,6 +19,10 @@ import kotlinx.coroutines.launch
  * Issue #20: when `updates.autoCheck` is on, a best-effort release check
  * runs at most every 6 h — the timestamp lives in the updatestate file, so
  * every app start does not hit the releases feed.
+ *
+ * Issue #25: automatic problem reports — a redacting uncaught-exception
+ * handler captures crash bundles (secrets, bearer tokens and subscription
+ * URLs are stripped before anything touches disk).
  */
 class NeuroRiftApplication : Application() {
 
@@ -25,6 +31,12 @@ class NeuroRiftApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         AppInfo.init(this)
+        CrashReporter(
+            filesDir,
+            secretProvider = {
+                runCatching { SettingsStore.shared(this).getBlocking().controllerSecret }.getOrNull()
+            },
+        ).install(Thread.getDefaultUncaughtExceptionHandler())
         SubscriptionScheduler(this).ensurePeriodicWork()
         appScope.launch {
             runCatching { UpdateService.shared(this@NeuroRiftApplication).autoCheck() }
