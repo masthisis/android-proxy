@@ -44,6 +44,12 @@
     <!-- اتحاد اشتراک‌ها (مسئلهٔ ۲۳) -->
     <string name="profiles_union">اتحاد</string>
     <string name="profiles_union_toggle">اتحاد اشتراک‌ها — مسیریابی به‌صورت یک مجموعه</string>
+    <!-- سرصفحه‌های واکشی اشتراک (مسئلهٔ ۲۴) -->
+    <string name="profiles_user_agent">User-Agent (اختیاری)</string>
+    <string name="profiles_headers">سرصفحه‌ها (اختیاری)</string>
+    <string name="profiles_headers_hint">هر خط به شکل نام: مقدار</string>
+    <string name="profiles_edit_headers">سرصفحه‌ها…</string>
+    <string name="profiles_headers_save">ذخیره</string>
     <!-- خانه به سبک پروتون (مسئلهٔ ۳۴) -->
     <string name="home_disconnected">شما متصل نیستید</string>
     <string name="home_connected_hint">ترافیک شما از طریق تانل محافظت می‌شود.</string>

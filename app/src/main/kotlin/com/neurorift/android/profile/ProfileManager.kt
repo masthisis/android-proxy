@@ -71,6 +71,8 @@ class ProfileManager(
         val nodeCount: Int = 0,
         /** #23: member of the union routing set (additional provider sources). */
         val unionActive: Boolean = false,
+        /** #24: per-profile fetch headers (User-Agent + custom), sanitized. */
+        val fetchHeaders: Map<String, String> = emptyMap(),
     )
 
     private val json = Json { prettyPrint = true; ignoreUnknownKeys = true }
@@ -212,16 +214,21 @@ class ProfileManager(
     /**
      * Import from a subscription URL. [intervalH] applies the
      * `subscription.defaultIntervalH` setting at import time (#18) so the
-     * auto-update scheduler owns the profile from day one.
+     * auto-update scheduler owns the profile from day one. [userAgent]
+     * overrides the default fetch User-Agent and [extraHeaders] ride every
+     * fetch of this profile (#24) — both persist in the registry so the
+     * update/updateAll paths reuse them verbatim.
      */
     suspend fun addFromUrl(
         url: String,
         name: String? = null,
         intervalH: Int = 0,
+        userAgent: String? = null,
+        extraHeaders: Map<String, String> = emptyMap(),
     ): ProfileRecord = withContext(Dispatchers.IO) {
         emitProgress(null, SubPhase.FETCHING, url)
-        val body = fetch(url)
-        addFromText(body, name, sourceUrl = url, intervalH = intervalH)
+        val body = fetch(url, userAgent = userAgent, extraHeaders = extraHeaders)
+        addFromText(body, name, sourceUrl = url, intervalH = intervalH, userAgent = userAgent, extraHeaders = extraHeaders)
     }
 
     suspend fun addFromText(
@@ -229,6 +236,8 @@ class ProfileManager(
         name: String? = null,
         sourceUrl: String? = null,
         intervalH: Int = 0,
+        userAgent: String? = null,
+        extraHeaders: Map<String, String> = emptyMap(),
     ): ProfileRecord = withContext(Dispatchers.IO) {
         emitProgress(null, SubPhase.PARSING, name ?: "content")
         val result = Decode.decode(content)
@@ -256,6 +265,11 @@ class ProfileManager(
                 intervalH = intervalH.coerceIn(0, 168),
                 lastSyncAt = if (sourceUrl.isNullOrEmpty()) 0L else System.currentTimeMillis(),
                 nodeCount = result.nodes.size,
+                // #24: persist the fetch headers so update/updateAll reuse
+                // them; an explicit UA overrides the default one.
+                fetchHeaders = ProfileHeaders.sanitize(extraHeaders).toMutableMap().apply {
+                    userAgent?.trim()?.takeIf { it.isNotEmpty() }?.let { put("User-Agent", it) }
+                },
             )
             writeProfileFile(record, content)
             registry.add(record)
@@ -279,10 +293,27 @@ class ProfileManager(
     suspend fun addFromLocalFile(fileName: String, content: String): ProfileRecord =
         addFromText(content, name = fileName)
 
-    private suspend fun fetch(url: String): String {
-        val request = Request.Builder().url(url)
-            .header("User-Agent", "NeuroRift-Android/1.0")
-            .build()
+    /**
+     * Subscription fetch through the shared client. The default User-Agent
+     * stays the historical one; an explicit [userAgent] — or a User-Agent
+     * inside [extraHeaders] — overrides it (#24). Header names/values are
+     * sanitized (trim, drop blanks, drop forbidden hop-by-hop headers) via
+     * [ProfileHeaders.sanitize].
+     */
+    private suspend fun fetch(
+        url: String,
+        userAgent: String? = null,
+        extraHeaders: Map<String, String> = emptyMap(),
+    ): String {
+        val headers = ProfileHeaders.sanitize(extraHeaders)
+        val ua = userAgent?.trim()?.takeIf { it.isNotEmpty() }
+            ?: headers.entries.firstOrNull { it.key.equals("User-Agent", ignoreCase = true) }?.value?.trim()?.takeIf { it.isNotEmpty() }
+        val builder = Request.Builder().url(url)
+            .header("User-Agent", ua ?: DEFAULT_FETCH_USER_AGENT)
+        for ((headerName, headerValue) in headers) {
+            if (!headerName.equals("User-Agent", ignoreCase = true)) builder.header(headerName, headerValue)
+        }
+        val request = builder.build()
         return fetchClient().newCall(request).execute().use { resp ->
             if (!resp.isSuccessful) throw IllegalArgumentException("subscription fetch failed: HTTP ${resp.code}")
             resp.body.string()
@@ -370,6 +401,23 @@ class ProfileManager(
     }
 
     /**
+     * Replaces the profile's fetch headers (#24): User-Agent + custom
+     * headers ride every subsequent fetch (update / updateAll). Input is
+     * sanitized via [ProfileHeaders.sanitize]; an empty map resets to the
+     * default User-Agent. Persists + emits `profiles:changed`; unknown ids
+     * are a no-op.
+     */
+    fun setFetchHeaders(profileId: String, headers: Map<String, String>): Boolean {
+        load()
+        val idx = registry.indexOfFirst { it.id == profileId }
+        if (idx < 0) return false
+        registry[idx] = registry[idx].copy(fetchHeaders = ProfileHeaders.sanitize(headers))
+        persist()
+        emitChanged()
+        return true
+    }
+
+    /**
      * Refreshes the subscription content in place: fetch -> decode -> rewrite
      * the materialized file -> hot provider swap (PUT /providers/proxies) or
      * engine hot reload — connections never drop (ARCHITECTURE §3).
@@ -390,7 +438,7 @@ class ProfileManager(
                     emitProgress(profileId, SubPhase.ERROR, "no source URL")
                     return@withContext false
                 }
-                val content = fetch(url)
+                val content = fetch(url, extraHeaders = record.fetchHeaders)
                 emitProgress(profileId, SubPhase.PARSING, record.name)
                 val result = Decode.decode(content)
                 if (result.nodes.isEmpty() && record.kind == ProfileKind.NODES) {
@@ -635,5 +683,8 @@ class ProfileManager(
     companion object {
         /** Core home — providers live under <filesDir>/neurorift/core. */
         fun dataDir(context: android.content.Context): File = CoreBridge.coreHome(context)
+
+        /** Default subscription fetch User-Agent (#24: user-set one wins). */
+        private const val DEFAULT_FETCH_USER_AGENT = "NeuroRift-Android/1.0"
     }
 }

@@ -32,6 +32,19 @@ is [SemVer](https://semver.org/). Releases are cut from `main` tags.
   sources). The flag persists migration-safely as `unionActive` in
   `profiles.json` and hot-reloads a running tunnel through the engine's
   `unionIdsProvider` plumbing (EngineManager/ConfigGen/TunService).
+- **Configurable subscription User-Agent / custom headers** (issue #24): per
+  profile fetch headers ride every subscription fetch (addFromUrl, update and
+  the updateAll worker path — all through the same shared fetch client). The
+  Add dialog gains an optional User-Agent field and an optional Headers field
+  (`Name: Value` per line, parsed by the pure, JVM-tested
+  `ProfileHeaders.parse`); a small "Headers…" entry on each profile card
+  opens the same dialog in edit mode with the stored values pre-filled
+  (save → `setFetchHeaders`). Header names/values are sanitized (trim, blank
+  names/values dropped) and forbidden hop-by-hop headers (`host`,
+  `content-length`, `connection`) can never be overridden; the default
+  `NeuroRift-Android/1.0` User-Agent stays in force unless the user sets one,
+  and the headers persist migration-safely as `fetchHeaders` in
+  `profiles.json` so the auto-update scheduler reuses them verbatim.
 - **Node-health failover watchdog** (issue #16): while the tunnel runs, a
   watchdog probes the primary group's current node through the hidden
   speed-test selector once per `failover.intervalSec`; consecutive failures

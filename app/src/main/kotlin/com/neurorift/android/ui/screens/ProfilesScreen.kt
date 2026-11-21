@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.CallMerge
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Http
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -44,6 +45,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.neurorift.android.R
+import com.neurorift.android.profile.ProfileHeaders
 import com.neurorift.android.profile.ProfileKind
 import com.neurorift.android.profile.ProfileManager
 import com.neurorift.android.profile.ProfileViewModel
@@ -60,7 +62,10 @@ import java.util.Date
  * profile. Issue #18: Update All action with an outcome summary row and a
  * per-card "next update" time for interval-managed subscriptions.
  * Issue #23: a union toggle per card joins a subscription into the union
- * routing set (multiple subscriptions active as ONE routing set).
+ * routing set (multiple subscriptions active as ONE routing set). Issue
+ * #24: the Add dialog gains an optional User-Agent + custom `Name: Value`
+ * headers; a "Headers…" entry per card opens the same dialog in edit mode
+ * (pre-filled, save → setFetchHeaders).
  */
 @Composable
 fun ProfilesScreen(
@@ -71,6 +76,8 @@ fun ProfilesScreen(
     val progress by vm.progress.collectAsState()
     val summary by vm.summary.collectAsState()
     var showAdd by remember { mutableStateOf(false) }
+    // #24: non-null → the reused dialog opens in header-edit mode for it.
+    var editingHeaders by remember { mutableStateOf<ProfileManager.ProfileRecord?>(null) }
     val clipboard = LocalClipboardManager.current
 
     Scaffold(
@@ -147,6 +154,7 @@ fun ProfilesScreen(
                         onActivate = { vm.activate(record.id) },
                         onToggleUnion = { vm.setUnionActive(record.id, !record.unionActive) },
                         onRefresh = { vm.refresh(record.id) },
+                        onHeaders = { editingHeaders = record },
                         onEdit = { onEditProfile(record.id) },
                         onDelete = { vm.remove(record.id) },
                     )
@@ -168,9 +176,25 @@ fun ProfilesScreen(
     if (showAdd) {
         AddProfileDialog(
             onDismiss = { showAdd = false },
-            onAdd = { url, name ->
+            onAdd = { url, name, userAgent, headers ->
                 showAdd = false
-                vm.addFromUrl(url, name)
+                vm.addFromUrl(url, name, userAgent = userAgent, extraHeaders = headers)
+            },
+        )
+    }
+    editingHeaders?.let { record ->
+        AddProfileDialog(
+            editRecord = record,
+            onDismiss = { editingHeaders = null },
+            onSaveHeaders = { userAgent, headers ->
+                editingHeaders = null
+                // The UA field wins over any User-Agent line in the headers
+                // text; an empty UA falls back to the app default.
+                val merged = headers
+                    .filterKeys { !it.equals("User-Agent", ignoreCase = true) }
+                    .toMutableMap()
+                userAgent.takeIf { it.isNotEmpty() }?.let { merged["User-Agent"] = it }
+                vm.setFetchHeaders(record.id, merged)
             },
         )
     }
@@ -193,6 +217,7 @@ private fun ProfileCard(
     onActivate: () -> Unit,
     onToggleUnion: () -> Unit,
     onRefresh: () -> Unit,
+    onHeaders: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
 ) {
@@ -272,6 +297,10 @@ private fun ProfileCard(
                 IconButton(onClick = onRefresh) {
                     Icon(Icons.Filled.Refresh, contentDescription = stringResource(R.string.profiles_refresh))
                 }
+                // Headers… entry (#24): opens the shared dialog in edit mode.
+                IconButton(onClick = onHeaders) {
+                    Icon(Icons.Filled.Http, contentDescription = stringResource(R.string.profiles_edit_headers))
+                }
                 IconButton(onClick = onEdit) {
                     Icon(Icons.Filled.Edit, contentDescription = stringResource(R.string.yaml_editor_title))
                 }
@@ -287,36 +316,96 @@ private fun ProfileCard(
     }
 }
 
+/** The profile's stored User-Agent (case-insensitive lookup) for pre-fill. */
+private fun userAgentOf(headers: Map<String, String>): String =
+    headers.entries.firstOrNull { it.key.equals("User-Agent", ignoreCase = true) }?.value ?: ""
+
+/** The stored custom headers as `Name: Value` lines (UA shown in its own field). */
+private fun headersTextOf(headers: Map<String, String>): String =
+    headers.filterKeys { !it.equals("User-Agent", ignoreCase = true) }
+        .entries.joinToString("\n") { "${it.key}: ${it.value}" }
+
+/**
+ * One dialog reused for add and header-edit (#24): in add mode it imports
+ * from a URL with an optional User-Agent + custom headers; in edit mode
+ * ([editRecord] != null) the same fields are pre-filled from the record's
+ * fetchHeaders and confirmed through [onSaveHeaders] (setFetchHeaders).
+ */
 @Composable
-private fun AddProfileDialog(onDismiss: () -> Unit, onAdd: (String, String?) -> Unit) {
+private fun AddProfileDialog(
+    editRecord: ProfileManager.ProfileRecord? = null,
+    onDismiss: () -> Unit,
+    onAdd: ((url: String, name: String?, userAgent: String, headers: Map<String, String>) -> Unit)? = null,
+    onSaveHeaders: (userAgent: String, headers: Map<String, String>) -> Unit = { _, _ -> },
+) {
     var url by remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") }
+    var userAgent by remember { mutableStateOf(editRecord?.fetchHeaders?.let { userAgentOf(it) } ?: "") }
+    var headers by remember { mutableStateOf(editRecord?.fetchHeaders?.let { headersTextOf(it) } ?: "") }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.profiles_add_url)) },
+        title = {
+            Text(
+                stringResource(
+                    if (editRecord == null) R.string.profiles_add_url else R.string.profiles_edit_headers,
+                ),
+            )
+        },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (editRecord == null) {
+                    OutlinedTextField(
+                        value = url,
+                        onValueChange = { url = it },
+                        label = { Text(stringResource(R.string.profiles_url_label)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    OutlinedTextField(
+                        value = name,
+                        onValueChange = { name = it },
+                        label = { Text(stringResource(R.string.profiles_name_label)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
                 OutlinedTextField(
-                    value = url,
-                    onValueChange = { url = it },
-                    label = { Text(stringResource(R.string.profiles_url_label)) },
+                    value = userAgent,
+                    onValueChange = { userAgent = it },
+                    label = { Text(stringResource(R.string.profiles_user_agent)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text(stringResource(R.string.profiles_name_label)) },
-                    singleLine = true,
+                    value = headers,
+                    onValueChange = { headers = it },
+                    label = { Text(stringResource(R.string.profiles_headers)) },
+                    placeholder = { Text(stringResource(R.string.profiles_headers_hint)) },
+                    minLines = 2,
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
         },
         confirmButton = {
             TextButton(
-                onClick = { onAdd(url.trim(), name.trim().ifEmpty { null }) },
-                enabled = url.startsWith("http://") || url.startsWith("https://"),
-            ) { Text(stringResource(R.string.profiles_add)) }
+                onClick = {
+                    val ua = userAgent.trim()
+                    val parsed = ProfileHeaders.parse(headers.lines())
+                    if (editRecord == null) {
+                        onAdd?.invoke(url.trim(), name.trim().ifEmpty { null }, ua, parsed)
+                    } else {
+                        onSaveHeaders(ua, parsed)
+                    }
+                },
+                enabled = editRecord != null ||
+                    url.startsWith("http://") || url.startsWith("https://"),
+            ) {
+                Text(
+                    stringResource(
+                        if (editRecord == null) R.string.profiles_add else R.string.profiles_headers_save,
+                    ),
+                )
+            }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.profiles_cancel)) }
