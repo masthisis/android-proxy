@@ -77,6 +77,11 @@ is [SemVer](https://semver.org/). Releases are cut from `main` tags.
   (device info composed at the install call site); tests pin secret /
   bearer / URL redaction, the ~4000-char report cap and the
   write → pending → clear lifecycle; strings land in EN + FA.
+- **Background sampling pause** (issue #26): a process-lifecycle
+  `SamplingGate` on the stream loops — traffic/log UI emissions pause while
+  the app is backgrounded (5 s idle cadence instead of 1 Hz) and resume
+  instantly on foreground; the cheap bookkeeping (traffic atomics, log
+  ring) keeps running so reopening the app shows live data immediately.
 - **Test Center** (issue #15): the Test tab grows into a real throughput
   lab — multi-stream download + upload speed tests routed through the
   hidden `⚡ NR SpeedTest` selector and its dedicated listener (node select
