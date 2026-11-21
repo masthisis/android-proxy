@@ -7,14 +7,14 @@ when an issue lands, remove the bullet here in the same docs sweep.
 ## v1.0.0 — MVP: the Windows cockpit on Android
 
 - [x] #6 chore: bootstrap repository — Gradle skeleton, CI, docs foundation, issue templates
-- [ ] #7 feat(core): Go core wrapper — mihomo v1.19.34 embedded via gomobile, VpnService fd tun
-- [ ] #8 feat(vpn): VpnService layer — fd handoff, notification, split tunneling, always-on
-- [ ] #9 feat(app): Compose app shell — Material 3, navigation, theming, EN/FA RTL
-- [ ] #10 feat(engine): control plane — config generator, REST client, streams
-- [ ] #11 feat(profiles): subscription import — URL/clipboard/file, all link formats, Clash YAML, sing-box
-- [ ] #12 feat(proxies): groups dashboard — select, batch latency, sorting/search
-- [ ] #13 feat(ui): live cockpit — traffic graph, connections, logs, rules, mode switching
-- [ ] #14 feat(settings): settings document + surface
+- [x] #7 feat(core): Go core wrapper — mihomo v1.19.34 embedded via gomobile, VpnService fd tun
+- [x] #8 feat(vpn): VpnService layer — fd handoff, notification, split tunneling, always-on
+- [x] #9 feat(app): Compose app shell — Material 3, navigation, theming, EN/FA RTL
+- [x] #10 feat(engine): control plane — config generator, REST client, streams
+- [x] #11 feat(profiles): subscription import — URL/clipboard/file, all link formats, Clash YAML, sing-box
+- [x] #12 feat(proxies): groups dashboard — select, batch latency, sorting/search
+- [x] #13 feat(ui): live cockpit — traffic graph, connections, logs, rules, mode switching
+- [x] #14 feat(settings): settings document + surface
 - [ ] #21 ci(release): tag-triggered release workflow — signed APKs + checksums
 
 ## v1.1.0 — test ergonomics + automation

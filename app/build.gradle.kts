@@ -88,6 +88,21 @@ android {
         archivesName = "NeuroRift"
     }
 
+    signingConfigs {
+        // Release keystore from CI env (issue #21): when the workflow
+        // provides KEYSTORE_FILE (+ passwords/alias) it is used; otherwise
+        // the debug key fallback keeps GitHub distribution self-signed and
+        // reproducible locally. Secret values are never logged.
+        if (System.getenv("KEYSTORE_FILE") != null) {
+            create("upload") {
+                storeFile = file(System.getenv("KEYSTORE_FILE"))
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD") ?: System.getenv("KEYSTORE_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         debug {
             isMinifyEnabled = false
@@ -99,9 +114,13 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
-            // Self-signed GitHub distribution: fall back to the debug key when
-            // no release keystore is configured (see SECURITY.md + CI).
-            signingConfig = signingConfigs.getByName("debug")
+            // Self-signed GitHub distribution: prefer the CI keystore, fall
+            // back to the debug key when none is configured (see SECURITY.md).
+            signingConfig = if (signingConfigs.findByName("upload") != null) {
+                signingConfigs.getByName("upload")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
 

@@ -21,6 +21,13 @@ is [SemVer](https://semver.org/). Releases are cut from `main` tags.
 
 ### Added
 
+- **Release hardening** (issue #21): tag-triggered release workflow gains
+  an optional CI keystore (KEYSTORE_BASE64 secret, decoded without printing
+  secrets; debug-key fallback stays the local default), plus a release
+  smoke job that downloads every published asset, verifies all SHA256 sums,
+  checks the universal APK for arm64-v8a/armeabi-v7a/x86_64 libraries and
+  asserts the prerelease flag matches the tag suffix. v1.0.0 roadmap items
+  checked off.
 - **Live cockpit** (issue #13): the Proton-style home now shows the live
   60-sample traffic graph (Canvas area chart, 1 Hz coalesced ticks, peak
   normalized, core memory readout), quick access to the secondary cockpit
