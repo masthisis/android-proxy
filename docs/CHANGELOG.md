@@ -24,6 +24,17 @@ is [SemVer](https://semver.org/). Releases are cut from `main` tags.
 
 ### Added
 
+- **Engine control plane** (issue #10): runtime-config generator (overlay:
+  external controller + random secret, mixed port, hidden speed-test group +
+  dedicated  listener, store-selected, unified-delay,
+  tcp-concurrent, jsdelivr geo mirrors; nodes-kind providers with active-only
+  health checks; clash/local splicing that preserves user content verbatim),
+  ordered-YAML emitter, mihomo REST client (MockWebServer-tested, auth
+  header, no closed-body bugs), dedicated no-timeout stream client with
+  Windows-parity coalescing (traffic 1 Hz, logs 0.5 Hz batches, ring ≤500,
+  lock-guarded), engine supervisor (hot reload + restart fallback, provider
+  hot swap, mode patch, crash-loop guard 5 fails / 2 min), process-wide
+  event bus mirroring the Windows event catalog.
 - **App shell** (issue #9): bottom navigation with the five Windows-parity
   destinations (Dashboard/Proxies/Profiles/Test/Settings), stable secondary
   routes (Connections/Logs/Rules), edge-to-edge Material 3 shell, honest

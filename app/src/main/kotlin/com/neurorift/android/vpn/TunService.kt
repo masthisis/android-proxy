@@ -16,9 +16,9 @@ import com.neurorift.android.MainActivity
 import com.neurorift.android.R
 import com.neurorift.android.core.CoreBridge
 import com.neurorift.android.engine.EngineHolder
+import com.neurorift.android.engine.EngineManager
+import com.neurorift.android.engine.EngineSettings
 import com.neurorift.android.engine.EngineState
-import com.neurorift.android.engine.RuntimeConfigScaffold
-import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -48,7 +48,19 @@ class TunService : VpnService() {
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var tun: ParcelFileDescriptor? = null
-    private val secret = AtomicReference<String?>(null)
+    private val engineSettings = EngineSettings.withGeneratedSecret()
+
+    @Volatile
+    private var engine: EngineManager? = null
+
+    /** Lazily built supervisor — one per service instance (P2: fd lifetime). */
+    private fun engine(): EngineManager =
+        engine ?: EngineManager(
+            coreHome = CoreBridge.coreHome(this),
+            settingsProvider = { engineSettings },
+            profilesProvider = { emptyList() }, // profile registry lands with #11
+            activeIdProvider = { null },
+        ).also { engine = it }
 
     // ---------------------------------------------------------------------
     // Platform hooks handed to the Go core
@@ -121,12 +133,13 @@ class TunService : VpnService() {
                     throw VpnException(getString(R.string.vpn_error_prepare))
                 }
                 CoreBridge.init(this@TunService, protectHook, uidResolver)
-                CoreBridge.applyConfig(currentConfig())
+                val mgr = engine()
+                mgr.applyFromProfiles()
                 CoreBridge.startTun(
                     fd = pfd.fd,
-                    stack = RuntimeConfigScaffold.TUN_STACK,
-                    gateway = RuntimeConfigScaffold.TUN_GATEWAY,
-                    dns = RuntimeConfigScaffold.TUN_DNS,
+                    stack = engineSettings.tunStack,
+                    gateway = EngineSettings.TUN_GATEWAY,
+                    dns = EngineSettings.TUN_DNS,
                 )
                 tun = pfd
             }
@@ -147,12 +160,12 @@ class TunService : VpnService() {
         val builder = Builder()
             .setSession(SESSION_NAME)
             .setMtu(MTU)
-            .addAddress(RuntimeConfigScaffold.VPN_ADDR4, RuntimeConfigScaffold.VPN_PREFIX4)
+            .addAddress(VPN_ADDR4, VPN_PREFIX4)
             .addRoute("0.0.0.0", 0)
-            .addDnsServer(RuntimeConfigScaffold.TUN_DNS)
+            .addDnsServer(EngineSettings.TUN_DNS)
         // IPv6 is safe on every supported API level.
         runCatching {
-            builder.addAddress(RuntimeConfigScaffold.VPN_ADDR6, RuntimeConfigScaffold.VPN_PREFIX6)
+            builder.addAddress(VPN_ADDR6, VPN_PREFIX6)
             builder.addRoute("::", 0)
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -181,13 +194,6 @@ class TunService : VpnService() {
         runCatching { CoreBridge.stopTun() }
         runCatching { tun?.close() }
         tun = null
-    }
-
-    private fun currentConfig(): String {
-        val sec = secret.updateAndGet { existing ->
-            existing ?: RuntimeConfigScaffold.generateSecret()
-        } ?: RuntimeConfigScaffold.generateSecret()
-        return RuntimeConfigScaffold.idleConfig(sec)
     }
 
     // ---------------------------------------------------------------------
@@ -258,6 +264,12 @@ class TunService : VpnService() {
     private class VpnException(message: String) : Exception(message)
 
     companion object {
+        // VPN interface addressing — mirrors EngineSettings.TUN_GATEWAY.
+        const val VPN_ADDR4 = "172.19.0.2"
+        const val VPN_PREFIX4 = 30
+        const val VPN_ADDR6 = "fdfe:dcba:9876::2"
+        const val VPN_PREFIX6 = 126
+
         const val CHANNEL_ID = "vpn_status"
         const val NOTIFICATION_ID = 1
         const val SESSION_NAME = "NeuroRift"
