@@ -64,4 +64,37 @@
     <string name="logs_empty">No log lines yet — connect to see the core stream.</string>
     <string name="rules_search">Search rules</string>
     <string name="rules_empty">No rules loaded — connect with an active profile.</string>
+    <!-- Settings (#14) -->
+    <string name="settings_section_general">General</string>
+    <string name="settings_start_on_boot">Start VPN on boot</string>
+    <string name="settings_allow_lan">Allow LAN connections</string>
+    <string name="settings_section_mode">Mode</string>
+    <string name="settings_section_ports">Ports</string>
+    <string name="settings_port_mixed">Mixed port</string>
+    <string name="settings_port_controller">Controller port</string>
+    <string name="settings_port_speedtest">Speed-test port</string>
+    <string name="settings_section_test">Test</string>
+    <string name="settings_test_url">Latency test URL</string>
+    <string name="settings_test_timeout">Test timeout (ms)</string>
+    <string name="settings_speed_streams">Speed test streams</string>
+    <string name="settings_speed_max_mb">Speed test cap (MB)</string>
+    <string name="settings_upload_test">Upload speed test</string>
+    <string name="settings_section_dns">DNS</string>
+    <string name="settings_dns_override">Override DNS</string>
+    <string name="settings_dns_nameservers">Nameservers (comma separated)</string>
+    <string name="settings_section_tun">TUN</string>
+    <string name="settings_tun_mtu">TUN MTU</string>
+    <string name="settings_section_subscription">Subscription</string>
+    <string name="settings_sub_interval">Default update interval (hours, 0 = manual)</string>
+    <string name="settings_sub_via_proxy">Update subscriptions via proxy</string>
+    <string name="settings_section_log">Log level</string>
+    <string name="settings_section_updates">Updates</string>
+    <string name="settings_updates_auto">Check for updates automatically</string>
+    <string name="settings_updates_prerelease">Include pre-releases</string>
+    <string name="settings_section_split">Split tunneling</string>
+    <string name="settings_split_pick">Choose apps</string>
+    <string name="settings_section_about">About</string>
+    <string name="settings_core_offline">mihomo core: not connected</string>
+    <string name="settings_save">Save settings</string>
+    <string name="split_search">Search apps</string>
 </resources>

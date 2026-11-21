@@ -19,6 +19,9 @@ import com.neurorift.android.engine.EngineHolder
 import com.neurorift.android.engine.EngineManager
 import com.neurorift.android.engine.EngineSettings
 import com.neurorift.android.engine.EngineState
+import com.neurorift.android.settings.AppFilter
+import com.neurorift.android.settings.SettingsStore
+import com.neurorift.android.settings.toEngineSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -48,7 +51,15 @@ class TunService : VpnService() {
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var tun: ParcelFileDescriptor? = null
-    private val engineSettings = EngineSettings.withGeneratedSecret()
+
+    /**
+     * Settings live in the persisted store (issue #14): the secret is
+     * generated once and stays stable across restarts; every (re)start and
+     * config regeneration reads the current document.
+     */
+    private val settingsStore by lazy { SettingsStore.shared(applicationContext) }
+
+    private fun engineSettings(): EngineSettings = settingsStore.getBlocking().toEngineSettings()
 
     @Volatile
     private var engine: EngineManager? = null
@@ -57,9 +68,9 @@ class TunService : VpnService() {
     private fun engine(): EngineManager =
         engine ?: EngineManager(
             coreHome = CoreBridge.coreHome(this),
-            settingsProvider = { engineSettings },
-            profilesProvider = { emptyList() }, // profile registry lands with #11
-            activeIdProvider = { null },
+            settingsProvider = { engineSettings() },
+            profilesProvider = { ProfileRegistry.meta() },
+            activeIdProvider = { ProfileRegistry.activeId() },
         ).also { engine = it }
 
     // ---------------------------------------------------------------------
@@ -128,7 +139,8 @@ class TunService : VpnService() {
 
         try {
             withContext(Dispatchers.IO) {
-                val pfd = establish()
+                val settings = engineSettings()
+                val pfd = establish(settings)
                 if (pfd == null) {
                     throw VpnException(getString(R.string.vpn_error_prepare))
                 }
@@ -137,7 +149,7 @@ class TunService : VpnService() {
                 mgr.applyFromProfiles()
                 CoreBridge.startTun(
                     fd = pfd.fd,
-                    stack = engineSettings.tunStack,
+                    stack = settings.tunStack,
                     gateway = EngineSettings.TUN_GATEWAY,
                     dns = EngineSettings.TUN_DNS,
                 )
@@ -153,13 +165,14 @@ class TunService : VpnService() {
     }
 
     /**
-     * Builds the tun interface and returns its descriptor. Routes/address/MTU
-     * are owned by the builder (P3); the fd is handed to mihomo afterwards.
+     * Builds the tun interface and returns its descriptor. Routes/address
+     * are owned by the builder (P3); MTU + split tunneling follow the
+     * persisted settings (issue #14).
      */
-    private fun establish(): ParcelFileDescriptor? {
+    private fun establish(settings: EngineSettings): ParcelFileDescriptor? {
         val builder = Builder()
             .setSession(SESSION_NAME)
-            .setMtu(MTU)
+            .setMtu(settings.tunMtu)
             .addAddress(VPN_ADDR4, VPN_PREFIX4)
             .addRoute("0.0.0.0", 0)
             .addDnsServer(EngineSettings.TUN_DNS)
@@ -171,8 +184,12 @@ class TunService : VpnService() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             builder.setBlocking(true)
         }
-        // Split tunneling wiring lands with the settings issue (#14): the
-        // builder calls addAllowedApplication / addDisallowedApplication here.
+        // Split tunneling (issue #14): allowlist = only these apps; denylist
+        // = these apps bypass; off = everything routes.
+        val stored = settingsStore.getBlocking()
+        val decision = AppFilter.decide(stored.splitTunneling.mode, stored.splitTunneling.apps)
+        decision.allowedApps.forEach { runCatching { builder.addAllowedApplication(it) } }
+        decision.disallowedApps.forEach { runCatching { builder.addDisallowedApplication(it) } }
         return builder.establish()
     }
 

@@ -31,6 +31,19 @@ is [SemVer](https://semver.org/). Releases are cut from `main` tags.
   filter, copy, clear) and Rules (`GET /rules` grouped by type, search,
   live mode patch without reload). JVM tests pin the windowing and byte
   formatting; CONTRACT.md gains the Android UI-surface mapping.
+- **Settings document + surface** (issue #14): the full CONTRACT settings
+  document as one serializable data class with Windows-mirroring validation
+  clamps (ports, timeouts, speed-test bounds, failover interval/strikes,
+  TUN MTU/stack, enum fallbacks, port-conflict resolution, secret preserved),
+  DataStore persistence (migration-safe defaults, corrupt-doc reset), engine
+  mapping (`Settings.toEngineSettings`) and automatic re-apply on save.
+  Settings screen with grouped Proton-styled sections (General/Mode/Ports/
+  Test/DNS/TUN/Subscription/Log/Updates/Split tunneling/About, EN + FA),
+  per-app language override (API 33+ locale manager), and the split-tunneling
+  app picker (v2rayNG per-app proxy parity) wired into the VPN builder via
+  the pure `AppFilter` decision table. The VPN layer now reads the persisted
+  document (secret stable across restarts) and hands the profile registry to
+  the engine (`ProfileRegistry`).
 - **Groups dashboard** (issue #12): Proxies screen — mode chips
   (rule/global/direct live patch), search + sort (delay/name) controls,
   group cards (Selector/URLTest/Fallback/LoadBalance) with per-node delay

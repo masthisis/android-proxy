@@ -37,9 +37,10 @@ enum class Destination(
         }
 }
 
-/** Secondary routes (placeholders now, real screens from issue #13). */
+/** Secondary routes beyond the bottom bar. */
 object SecondaryRoute {
     const val CONNECTIONS = "connections"
     const val LOGS = "logs"
     const val RULES = "rules"
+    const val SPLIT_TUNNELING = "split-tunneling"
 }
