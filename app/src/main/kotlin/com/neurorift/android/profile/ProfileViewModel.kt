@@ -5,8 +5,8 @@ import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.neurorift.android.engine.EngineHolder
-import com.neurorift.android.engine.EngineManager
-import com.neurorift.android.engine.EngineSettings
+import com.neurorift.android.engine.EngineRuntime
+import com.neurorift.android.engine.EngineState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,9 +28,15 @@ class ProfileViewModel(app: Application) : AndroidViewModel(app) {
                 dataDir = ProfileManager.dataDir(context),
                 engine = { reason ->
                     // Engine hot-apply callback: the manager owns no engine
-                    // reference — the service wires it; re-apply goes through
-                    // the same config regeneration path (issue #10).
-                    true
+                    // reference — a running tunnel hot-reloads the generated
+                    // config; with the VPN down the apply happens on the
+                    // next start (issue #10, #17).
+                    val mgr = EngineRuntime.manager
+                    if (mgr != null && EngineHolder.status.value.state == EngineState.RUNNING) {
+                        mgr.hotReload(reason)
+                    } else {
+                        true
+                    }
                 },
             ).also { shared = it }
     }

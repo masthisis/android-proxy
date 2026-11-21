@@ -78,6 +78,22 @@
     <string name="logs_empty">هنوز خطی ثبت نشده — برای دیدن جریان هسته متصل شوید.</string>
     <string name="rules_search">جست‌وجوی قوانین</string>
     <string name="rules_empty">قوانینی بارگذاری نشده — با یک پروفایل فعال متصل شوید.</string>
+    <!-- قوانین مسیریابی سفارشی (مسئلهٔ ۱۷) -->
+    <string name="settings_section_routing">مسیریابی</string>
+    <string name="routing_add">افزودن قانون</string>
+    <string name="routing_delete">حذف قانون</string>
+    <string name="routing_pattern">الگو (دامنه / فرایند)</string>
+    <string name="routing_type">نوع</string>
+    <string name="routing_target">مقصد (DIRECT / گروه)</string>
+    <string name="routing_empty">هنوز قانون سفارشی‌ای نیست — قوانین پروفایل مسیر ترافیک را تعیین می‌کنند.</string>
+    <string name="connections_route_host">مسیریابی این میزبان</string>
+    <!-- ویرایشگر خام YAML پروفایل (مسئلهٔ ۱۷) -->
+    <string name="yaml_editor_title">ویرایشگر YAML</string>
+    <string name="yaml_validate">اعتبارسنجی</string>
+    <string name="yaml_save">ذخیره</string>
+    <string name="yaml_saved">با موفقیت ذخیره شد.</string>
+    <string name="yaml_readonly">پروفایل‌های فهرست نود فقط‌خواندنی هستند (فایل ارائه‌دهنده).</string>
+    <string name="yaml_no_issues">مشکلی پیدا نشد.</string>
     <!-- تنظیمات (مسئلهٔ ۱۴) -->
     <string name="settings_section_general">عمومی</string>
     <string name="settings_start_on_boot">اجرای VPN هنگام روشن شدن</string>

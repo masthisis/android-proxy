@@ -26,6 +26,21 @@ import org.yaml.snakeyaml.Yaml as SnakeYaml
  */
 object ConfigGen {
 
+    /**
+     * A single user-defined routing override (issue #17) — the neutral,
+     * engine-side rule shape the settings layer maps its persisted
+     * `routingOverrides` document onto. `type` is the lowercase mihomo rule
+     * kind ("domain-suffix", "domain", "domain-keyword", "domain-regex",
+     * "process-name"); `target` is a policy name (DIRECT/REJECT or a proxy
+     * group). Kept engine-side so the dependency direction stays settings →
+     * engine.
+     */
+    data class RoutingRule(
+        val type: String,
+        val pattern: String,
+        val target: String,
+    )
+
     /** Provider key for a profile id — mirrors the Windows providerName(). */
     fun providerName(profileID: String): String = "sub-$profileID"
 
@@ -39,13 +54,14 @@ object ConfigGen {
         settings: EngineSettings,
         profiles: List<ProfileMeta>,
         activeId: String?,
+        overrides: List<RoutingRule> = emptyList(),
         contentOf: (ProfileMeta) -> String,
     ): String {
         val active = profiles.firstOrNull { it.id == activeId }
         return if (active != null && (active.kind == ProfileKind.CLASH || active.kind == ProfileKind.LOCAL)) {
-            generateClash(settings, profiles, active, contentOf)
+            generateClash(settings, profiles, active, contentOf, overrides)
         } else {
-            generateNodes(settings, profiles, active?.takeIf { it.kind == ProfileKind.NODES })
+            generateNodes(settings, profiles, active?.takeIf { it.kind == ProfileKind.NODES }, overrides)
         }
     }
 
@@ -55,6 +71,7 @@ object ConfigGen {
         settings: EngineSettings,
         profiles: List<ProfileMeta>,
         active: ProfileMeta?,
+        overrides: List<RoutingRule>,
     ): String {
         val root = OMap()
             .set("mode", settings.mode)
@@ -113,7 +130,9 @@ object ConfigGen {
         }
         root.set("proxy-groups", groups)
 
-        root.set("rules", lanRules() + "MATCH,$NODE_SELECT")
+        // Rule order: LAN direct rules first (never shadowed), then the
+        // user's high-priority overrides (issue #17), then the catch-all.
+        root.set("rules", lanRules() + overrideRules(overrides) + "MATCH,$NODE_SELECT")
         return Yaml.dump(root)
     }
 
@@ -124,6 +143,7 @@ object ConfigGen {
         profiles: List<ProfileMeta>,
         active: ProfileMeta,
         contentOf: (ProfileMeta) -> String,
+        overrides: List<RoutingRule>,
     ): String {
         val raw = contentOf(active)
         val loaded = SnakeYaml().load<Any>(raw)
@@ -180,10 +200,13 @@ object ConfigGen {
             doc["proxy-providers"] = existing
         }
 
-        // Empty rules are a config error — ensure the LAN + catch-all default.
+        // Overrides ride after the user's own rules (issue #17); with an
+        // empty user list the LAN block + catch-all MATCH fallback applies.
         val rules = doc["rules"] as? List<Any?>
-        if (rules.isNullOrEmpty()) {
-            doc["rules"] = lanRules() + "MATCH,$NODE_SELECT"
+        doc["rules"] = if (rules.isNullOrEmpty()) {
+            lanRules() + overrideRules(overrides) + "MATCH,$NODE_SELECT"
+        } else {
+            rules + overrideRules(overrides)
         }
 
         return org.yaml.snakeyaml.DumperOptions().let { options ->
@@ -266,4 +289,28 @@ object ConfigGen {
         "IP-CIDR,224.0.0.0/4,DIRECT,no-resolve",
         "IP-CIDR6,fe80::/10,DIRECT,no-resolve",
     )
+
+    /**
+     * Maps the persisted routing overrides (issue #17) onto mihomo rule
+     * lines, `TYPE,pattern,target`. Both the raw lowercase kind and the
+     * already-uppercase mihomo spelling are accepted; unknown kinds fall
+     * back to DOMAIN-SUFFIX. Blank patterns/targets never render.
+     */
+    fun overrideRules(overrides: List<RoutingRule>): List<String> =
+        overrides.mapNotNull { rule ->
+            val pattern = rule.pattern.trim()
+            val target = rule.target.trim()
+            if (pattern.isEmpty() || target.isEmpty()) return@mapNotNull null
+            "${mihomoRuleType(rule.type)},$pattern,$target"
+        }
+
+    /** Lowercase kind -> mihomo rule type; unknown values become DOMAIN-SUFFIX. */
+    fun mihomoRuleType(type: String): String = when (type.trim().lowercase()) {
+        "domain-suffix" -> "DOMAIN-SUFFIX"
+        "domain" -> "DOMAIN"
+        "domain-keyword" -> "DOMAIN-KEYWORD"
+        "domain-regex" -> "DOMAIN-REGEX"
+        "process-name" -> "PROCESS-NAME"
+        else -> "DOMAIN-SUFFIX"
+    }
 }

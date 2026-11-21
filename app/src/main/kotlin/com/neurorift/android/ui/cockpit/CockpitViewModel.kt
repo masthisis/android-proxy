@@ -1,11 +1,16 @@
 package com.neurorift.android.ui.cockpit
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.neurorift.android.engine.EngineHolder
 import com.neurorift.android.engine.EngineRuntime
+import com.neurorift.android.engine.EngineState
 import com.neurorift.android.engine.MihomoRestClient
 import com.neurorift.android.engine.ProxyService
 import com.neurorift.android.engine.StreamClient
+import com.neurorift.android.settings.Settings
+import com.neurorift.android.settings.SettingsStore
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,8 +26,11 @@ import kotlinx.coroutines.launch
  * Pause semantics (Windows #76 parity groundwork): [pause] cancels the
  * collectors, [resume] re-starts them; the Dashboard drives both from the
  * lifecycle so sampling and stream work stop while the screen is hidden.
+ *
+ * Issue #17 adds [addRoutingOverride] — the Connections quick-add persists
+ * the rule through the settings store and hot-reloads a running tunnel.
  */
-class CockpitViewModel : ViewModel() {
+class CockpitViewModel(app: Application) : AndroidViewModel(app) {
 
     data class UiState(
         val history: TrafficHistory = TrafficHistory(),
@@ -133,6 +141,33 @@ class CockpitViewModel : ViewModel() {
             if (svc?.setMode(mode) == true) {
                 _state.value = _state.value.copy(mode = mode)
             }
+        }
+    }
+
+    /**
+     * Quick-adds a routing override from the Connections screen (issue #17):
+     * saves directly through the settings store (sanitize → persist) and,
+     * when a tunnel is running, hot-reloads the generated config so the rule
+     * lands without dropping the connection.
+     */
+    fun addRoutingOverride(pattern: String, type: String, target: String) {
+        viewModelScope.launch {
+            runCatching {
+                val store = SettingsStore.shared(getApplication())
+                val current = store.get()
+                store.save(
+                    current.copy(
+                        routingOverrides = current.routingOverrides + Settings.RoutingOverride(
+                            pattern = pattern,
+                            type = type,
+                            target = target,
+                        ),
+                    ),
+                )
+            }
+            val mgr = EngineRuntime.manager ?: return@launch
+            if (EngineHolder.status.value.state != EngineState.RUNNING) return@launch
+            runCatching { mgr.hotReload("routing override") }
         }
     }
 

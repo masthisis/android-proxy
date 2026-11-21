@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AltRoute
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material3.AlertDialog
@@ -38,17 +39,25 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.neurorift.android.R
 import com.neurorift.android.ui.cockpit.ByteFormat
 import com.neurorift.android.ui.cockpit.CockpitViewModel
+import com.neurorift.android.ui.settings.RoutingOverrideDialog
+import com.neurorift.android.ui.settings.RoutingTypes
 import com.neurorift.android.ui.theme.MaintenanceGray
 
 /**
  * Connections view of the live cockpit (issue #13): virtualized 1 Hz
  * snapshot list — host, rule + chain, up/down totals, per-connection close
  * and a confirmed close-all.
+ *
+ * Issue #17: each row gains a quick "route" action that pre-fills the
+ * routing-override dialog with the connection's host (port stripped,
+ * domain-suffix → DIRECT) and saves it through the settings store + hot
+ * reload.
  */
 @Composable
 fun ConnectionsScreen(vm: CockpitViewModel = viewModel()) {
     val state by vm.state.collectAsStateWithLifecycle()
     var confirmCloseAll by remember { mutableStateOf(false) }
+    var routeHost by remember { mutableStateOf<String?>(null) }
 
     Column(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
 
@@ -124,6 +133,13 @@ fun ConnectionsScreen(vm: CockpitViewModel = viewModel()) {
                                 color = MaintenanceGray,
                             )
                         }
+                        IconButton(onClick = { routeHost = hostWithoutPort(row.host) }) {
+                            Icon(
+                                Icons.Filled.AltRoute,
+                                contentDescription = stringResource(R.string.connections_route_host),
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
+                        }
                         IconButton(onClick = { vm.closeConnection(row.id) }) {
                             Icon(
                                 Icons.Filled.Close,
@@ -162,5 +178,34 @@ fun ConnectionsScreen(vm: CockpitViewModel = viewModel()) {
                 TextButton(onClick = { confirmCloseAll = false }) { Text(stringResource(R.string.profiles_cancel)) }
             },
         )
+    }
+
+    routeHost?.let { host ->
+        RoutingOverrideDialog(
+            title = stringResource(R.string.connections_route_host),
+            initialPattern = host,
+            initialType = RoutingTypes.DEFAULT,
+            initialTarget = RoutingTypes.DIRECT,
+            onDismiss = { routeHost = null },
+            onConfirm = { pattern, type, target ->
+                routeHost = null
+                vm.addRoutingOverride(pattern, type, target)
+            },
+        )
+    }
+}
+
+/**
+ * Strips the trailing :port from a connection host ("ip:port" as rendered
+ * from the snapshot metadata) so the pattern is a bare domain/address.
+ */
+internal fun hostWithoutPort(host: String): String {
+    val idx = host.lastIndexOf(':')
+    if (idx <= 0) return host
+    val port = host.substring(idx + 1)
+    return if (port.isNotEmpty() && port.length <= 5 && port.all { it.isDigit() }) {
+        host.substring(0, idx)
+    } else {
+        host
     }
 }

@@ -22,6 +22,8 @@ data class EngineSettings(
     val speedUploadUrl: String = "https://speed.cloudflare.com/__up",
     val dnsOverride: Boolean = true,
     val dnsNameservers: List<String> = listOf("223.5.5.5", "1.1.1.1"),
+    /** User routing overrides injected into every generated config (#17). */
+    val routingOverrides: List<ConfigGen.RoutingRule> = emptyList(),
 ) {
     companion object {
         /** Gateway prefixes handed to mihomo's tun listener (mirrors the VPN builder). */

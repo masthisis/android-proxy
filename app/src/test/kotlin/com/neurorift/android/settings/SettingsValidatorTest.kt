@@ -105,4 +105,49 @@ class SettingsValidatorTest {
         assertEquals(listOf("1.1.1.1"), fixed.dns.nameservers)
         assertEquals(listOf("a"), fixed.splitTunneling.apps)
     }
+
+    // ------------------------------------------------------ routing overrides --
+
+    @Test
+    fun `routing overrides clamp to the two-hundred cap`() {
+        val many = (0 until 201).map {
+            Settings.RoutingOverride(pattern = "p$it", type = "domain-suffix", target = "DIRECT")
+        }
+        val result = SettingsValidator.sanitize(Settings(routingOverrides = many))
+        assertEquals(200, result.settings.routingOverrides.size)
+        assertTrue(result.fixes.contains("routingOverrides.count"))
+        assertEquals("p0", result.settings.routingOverrides.first().pattern)
+        assertEquals("p199", result.settings.routingOverrides.last().pattern)
+    }
+
+    @Test
+    fun `routing overrides trim fields and drop blank entries`() {
+        val fixed = SettingsValidator.sanitize(
+            Settings(
+                routingOverrides = listOf(
+                    Settings.RoutingOverride(pattern = "  ok.example  ", type = "DOMAIN", target = " DIRECT "),
+                    Settings.RoutingOverride(pattern = "   ", type = "domain-suffix", target = "DIRECT"),
+                    Settings.RoutingOverride(pattern = "bad.example", type = "domain-suffix", target = "   "),
+                ),
+            ),
+        ).settings
+        assertEquals(1, fixed.routingOverrides.size)
+        assertEquals("ok.example", fixed.routingOverrides[0].pattern)
+        assertEquals("DIRECT", fixed.routingOverrides[0].target)
+        // The uppercase kind is normalized into the lowercase known set.
+        assertEquals("domain", fixed.routingOverrides[0].type)
+    }
+
+    @Test
+    fun `routing overrides unknown type falls back to domain-suffix`() {
+        val fixed = SettingsValidator.sanitize(
+            Settings(
+                routingOverrides = listOf(
+                    Settings.RoutingOverride(pattern = "x.example", type = "ip-cidr", target = "DIRECT"),
+                ),
+            ),
+        ).settings
+        assertEquals("domain-suffix", fixed.routingOverrides.single().type)
+        assertEquals("x.example", fixed.routingOverrides.single().pattern)
+    }
 }

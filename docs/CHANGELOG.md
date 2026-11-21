@@ -33,6 +33,20 @@ is [SemVer](https://semver.org/). Releases are cut from `main` tags.
   ≤50 latency samples per node with per-node Canvas sparklines). The screen
   degrades to the "connect first" state while the engine is down; JVM tests
   pin the Mbps math and the store; all strings land in EN + FA.
+- **Per-domain routing overrides + raw YAML editor** (issue #17): the
+  settings document gains a Routing section (pattern → target rows with
+  type chips, add/remove dialog, ≤200 sanitized entries persisted through
+  the validator) whose overrides are injected into every generated config
+  between the LAN direct block and the MATCH catch-all — in both the
+  app-owned and the spliced-clash shapes, mapped through a neutral
+  engine-side `ConfigGen.RoutingRule`. The Connections screen quick-adds a
+  DOMAIN-SUFFIX → DIRECT override for a live host from its row (settings
+  save + tunnel hot reload without dropping connections), and Profiles gain
+  an edit action opening a raw YAML editor (monospace surface, local
+  Validate through the pure `YamlLint` snakeyaml linter, atomic save with
+  pre-write validation, read-only view for nodes-kind provider files, and
+  automatic engine hot re-apply for the active profile on a running
+  tunnel). All new strings land in EN + FA.
 - **Release hardening** (issue #21): tag-triggered release workflow gains
   an optional CI keystore (KEYSTORE_BASE64 secret, decoded without printing
   secrets; debug-key fallback stays the local default), plus a release

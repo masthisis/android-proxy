@@ -43,4 +43,10 @@ object SecondaryRoute {
     const val LOGS = "logs"
     const val RULES = "rules"
     const val SPLIT_TUNNELING = "split-tunneling"
+
+    /** Raw profile YAML editor route pattern (#17); see [yamlEditor]. */
+    const val YAML_EDITOR = "yaml/{profileId}"
+
+    /** Builds the editor route for a concrete profile id. */
+    fun yamlEditor(profileId: String): String = "yaml/$profileId"
 }
