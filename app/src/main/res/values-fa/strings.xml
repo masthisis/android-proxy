@@ -14,4 +14,14 @@
     <string name="vpn_action_disconnect">قطع اتصال</string>
     <string name="vpn_error_prepare">مجوز VPN داده نشد</string>
     <string name="vpn_prepare_needed">اندروید برای ساخت تانل VPN یک‌بار مجوز می‌خواهد.</string>
+    <!-- پوستهٔ ناوبری (مسئلهٔ ۹) -->
+    <string name="nav_dashboard">داشبورد</string>
+    <string name="nav_proxies">نودها</string>
+    <string name="nav_profiles">اشتراک‌ها</string>
+    <string name="nav_test">تست</string>
+    <string name="nav_settings">تنظیمات</string>
+    <string name="nav_connections">اتصال‌ها</string>
+    <string name="nav_logs">گزارش‌ها</string>
+    <string name="nav_rules">قوانین</string>
+    <string name="placeholder_issue_hint">با مسئلهٔ شمارهٔ %1$d ارائه می‌شود</string>
 </resources>
