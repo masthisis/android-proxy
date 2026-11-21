@@ -51,4 +51,17 @@
     <string name="proxies_test_group">Test this group</string>
     <string name="proxies_test_node">Test this node</string>
     <string name="proxies_empty">No groups — connect with an active profile.</string>
+    <!-- Live cockpit (#13) -->
+    <string name="cockpit_traffic_title">TRAFFIC (60s)</string>
+    <string name="cockpit_memory">Core memory</string>
+    <string name="connections_close_one">Close connection</string>
+    <string name="connections_close_all">Close all connections</string>
+    <string name="connections_close_all_confirm">Close every active connection? Downloads in progress will be interrupted.</string>
+    <string name="connections_close_all_confirm_yes">Close all</string>
+    <string name="connections_empty">No active connections.</string>
+    <string name="logs_copy">Copy logs</string>
+    <string name="logs_clear">Clear logs</string>
+    <string name="logs_empty">No log lines yet — connect to see the core stream.</string>
+    <string name="rules_search">Search rules</string>
+    <string name="rules_empty">No rules loaded — connect with an active profile.</string>
 </resources>

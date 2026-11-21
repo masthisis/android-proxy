@@ -21,6 +21,16 @@ is [SemVer](https://semver.org/). Releases are cut from `main` tags.
 
 ### Added
 
+- **Live cockpit** (issue #13): the Proton-style home now shows the live
+  60-sample traffic graph (Canvas area chart, 1 Hz coalesced ticks, peak
+  normalized, core memory readout), quick access to the secondary cockpit
+  views, and lifecycle-aware sampling (traffic/connections/log collectors
+  pause when the screen is hidden — Windows #76 groundwork). New screens:
+  Connections (1 Hz snapshot poll, per-connection close, confirmed
+  close-all, session totals), Logs (batched stream + ≤500 tail, level
+  filter, copy, clear) and Rules (`GET /rules` grouped by type, search,
+  live mode patch without reload). JVM tests pin the windowing and byte
+  formatting; CONTRACT.md gains the Android UI-surface mapping.
 - **Groups dashboard** (issue #12): Proxies screen — mode chips
   (rule/global/direct live patch), search + sort (delay/name) controls,
   group cards (Selector/URLTest/Fallback/LoadBalance) with per-node delay

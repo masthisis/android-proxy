@@ -58,6 +58,20 @@ codebases stay conceptually identical.
 | `UpdateService` | `check`, `download`, `install` (v1.1.0) |
 | `FailoverService` | `status`, `testNow` (v1.1.0) |
 
+## UI surfaces (Android)
+
+Compose screens consume the service/event layer; the mapping landed with the
+issues in parentheses:
+
+| Screen | Consumes |
+| --- | --- |
+| Home / cockpit (#13, #34) | `netTraffic` (60-sample window), engine status, profile registry; quick routes to Connections/Logs/Rules; lifecycle-aware sampling (pauses when hidden) |
+| Proxies (#12) | `ProxyService.groups/selectProxy/testGroup/testNode/setMode`, `groupsRefresh` |
+| Connections (#13) | `netConnections` poll + `closeConnection`/`closeAllConnections` |
+| Logs (#13) | `coreLogs` batches + ring tail, level filter, copy/clear |
+| Rules (#13) | `GET /rules` grouped + search, live mode patch |
+| Profiles (#11) | `ProfileService` CRUD + `subProgress` |
+
 ## Events (service → UI flows)
 
 Names mirror the Windows event catalog 1:1:

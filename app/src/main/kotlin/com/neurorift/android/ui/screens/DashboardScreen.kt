@@ -8,6 +8,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,12 +22,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PowerSettingsNew
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -38,6 +41,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.neurorift.android.AppInfo
@@ -45,25 +49,49 @@ import com.neurorift.android.R
 import com.neurorift.android.engine.EngineHolder
 import com.neurorift.android.engine.EngineState
 import com.neurorift.android.profile.ProfileViewModel
+import com.neurorift.android.ui.cockpit.CockpitViewModel
+import com.neurorift.android.ui.cockpit.TrafficCard
 import com.neurorift.android.ui.theme.ProtonViolet
 import com.neurorift.android.ui.theme.DisconnectedPink
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 
 /**
- * Proton-style Home (issue #34): the status headline + the big circular
- * connect button, with the active-profile card below. The traffic graph,
- * connections and logs land around this in the cockpit issue (#13); the
- * state machine stays the one from #9 (`EngineHolder.status`, TunService
- * callbacks handed in by the activity).
+ * Proton-style Home (issue #34) grown into the live cockpit (issue #13):
+ * status headline + big circular connect button, the 1 Hz traffic graph
+ * card, quick access to Connections/Logs/Rules, and the active-profile
+ * card. Stream sampling pauses with the lifecycle (Windows #76 groundwork).
  */
 @Composable
 fun DashboardScreen(
     onConnect: () -> Unit,
     onDisconnect: () -> Unit,
+    onOpenConnections: () -> Unit = {},
+    onOpenLogs: () -> Unit = {},
+    onOpenRules: () -> Unit = {},
 ) {
     val status by EngineHolder.status.collectAsStateWithLifecycle()
     val profileVm: ProfileViewModel = viewModel()
     val profiles by profileVm.profiles.collectAsStateWithLifecycle()
     val activeName = profiles.firstOrNull { it.id == profileVm.activeId }?.name
+    val cockpit: CockpitViewModel = viewModel()
+
+    // Lifecycle-aware sampling: traffic/connections/log collectors only run
+    // while the screen is visible (issue #13 acceptance criterion).
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                androidx.lifecycle.Lifecycle.Event.ON_RESUME -> cockpit.resume()
+                androidx.lifecycle.Lifecycle.Event.ON_PAUSE -> cockpit.pause()
+                else -> Unit
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    val cockpitState by cockpit.state.collectAsStateWithLifecycle()
 
     val connected = status.state == EngineState.RUNNING
     val transitioning = status.state == EngineState.STARTING || status.state == EngineState.STOPPING
@@ -191,7 +219,36 @@ fun DashboardScreen(
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
         )
 
-        Spacer(Modifier.height(32.dp))
+        Spacer(Modifier.height(24.dp))
+
+        // --- Live traffic (only meaningful while the engine runs) ---------
+        if (status.state == EngineState.RUNNING) {
+            TrafficCard(
+                history = cockpitState.history.snapshot(),
+                up = cockpitState.up,
+                down = cockpitState.down,
+                memory = cockpitState.memory,
+            )
+            Spacer(Modifier.height(12.dp))
+        }
+
+        // --- Quick access to the cockpit views ----------------------------
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            AssistChip(
+                onClick = onOpenConnections,
+                label = { Text(stringResource(R.string.nav_connections)) },
+            )
+            AssistChip(
+                onClick = onOpenLogs,
+                label = { Text(stringResource(R.string.nav_logs)) },
+            )
+            AssistChip(
+                onClick = onOpenRules,
+                label = { Text(stringResource(R.string.nav_rules)) },
+            )
+        }
+
+        Spacer(Modifier.height(16.dp))
 
         // --- Active profile card ------------------------------------------
         Card(
