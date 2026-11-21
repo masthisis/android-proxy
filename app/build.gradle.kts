@@ -1,5 +1,3 @@
-import java.util.Properties
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -11,6 +9,62 @@ val appVersion: String = (project.findProperty("appVersion") as String?) ?: "1.0
 val appVersionCode: Int =
     (project.findProperty("appVersionCode") as String?)?.toInt()
         ?: 1
+
+// ---------------------------------------------------------------------------
+// Go core AAR (issue #7): core/ (Go module `nrcore`, embedding mihomo) is
+// compiled by gomobile into an AAR that this module consumes. One command
+// builds the whole chain: ./gradlew assembleDebug  ==  Go -> AAR -> APK.
+//
+// -PskipCore=true skips the Go BUILD only: an existing AAR is still packaged
+// (build the AAR once with `gomobile bind`, then iterate on UI fast).
+// -PcoreTarget=android/arm64 limits the ABI set for constrained machines
+// (CI keeps the default: all four ABIs).
+//
+// The Go build requires go, gomobile, gobind, javac on PATH and the NDK
+// under ANDROID_HOME (see docs/BUILDING.md).
+// ---------------------------------------------------------------------------
+val skipCore = (project.findProperty("skipCore") as String?) == "true"
+val coreAarFile = rootProject.layout.projectDirectory.file("core/build/nrcore.aar")
+val coreTarget = (project.findProperty("coreTarget") as String?) ?: "android"
+
+val buildCoreAar by tasks.registering(Exec::class) {
+    workingDir = rootProject.file("core")
+    commandLine(
+        "gomobile", "bind",
+        "-target=$coreTarget",      // android = arm64-v8a, armeabi-v7a, x86, x86_64
+        "-androidapi=26",
+        "-ldflags=-w -s",           // strip debug info: the AAR ships in every APK
+        "-o", coreAarFile.asFile.absolutePath,
+        ".",
+    )
+    // Source inputs only — core/build is the task output and must not be an
+    // input too.
+    inputs.files(rootProject.fileTree(rootProject.file("core")) { exclude("build") })
+    outputs.file(coreAarFile)
+    doFirst {
+        coreAarFile.asFile.parentFile.mkdirs()
+        val inPath = listOf("gomobile", "go").any { cmd ->
+            runCatching {
+                val which = ProcessBuilder("which", cmd).start()
+                which.waitFor() == 0
+            }.getOrDefault(false)
+        }
+        if (!inPath) {
+            throw GradleException(
+                "gomobile/go not found on PATH - install them (docs/BUILDING.md) " +
+                    "or pass -PskipCore=true"
+            )
+        }
+    }
+}
+
+if (!skipCore) {
+    tasks.matching { it.name.startsWith("preBuild") }.configureEach {
+        dependsOn(buildCoreAar)
+    }
+} else if (coreAarFile.asFile.exists()) {
+    logger.lifecycle("NeuroRift: skipCore=true - packaging existing core AAR (${coreAarFile.asFile.name})")
+}
 
 android {
     namespace = "com.neurorift.android"
@@ -70,6 +124,11 @@ android {
 }
 
 dependencies {
+    if (!skipCore || coreAarFile.asFile.exists()) {
+        // Go core wrapper (mihomo embedded). The generated Kotlin/Java API
+        // lives in package `nrcore` (Nrcore, ProtectHook, UidResolver).
+        implementation(files(coreAarFile))
+    }
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.activity.compose)
