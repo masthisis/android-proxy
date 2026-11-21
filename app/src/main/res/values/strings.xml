@@ -65,6 +65,16 @@
     <string name="test_center_search">Search nodes</string>
     <string name="test_center_empty">No nodes — connect with an active profile.</string>
     <string name="test_center_test_all">Test all latencies</string>
+    <!-- Failover watchdog (#16) -->
+    <string name="failover_title">Failover</string>
+    <string name="failover_watching">Watching</string>
+    <string name="failover_off">Off</string>
+    <string name="failover_strikes">Strikes: %1$d</string>
+    <string name="failover_last_switch">Last switch: %1$s → %2$s</string>
+    <string name="failover_test_now">Test now</string>
+    <string name="failover_event_switched">Switched %1$s → %2$s</string>
+    <string name="failover_event_ok">%1$s OK</string>
+    <string name="failover_event_failed">%1$s failed (strike %2$d)</string>
     <!-- Live cockpit (#13) -->
     <string name="cockpit_traffic_title">TRAFFIC (60s)</string>
     <string name="cockpit_memory">Core memory</string>

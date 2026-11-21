@@ -65,6 +65,16 @@
     <string name="test_center_search">جست‌وجوی نودها</string>
     <string name="test_center_empty">نودی نیست — با یک پروفایل فعال متصل شوید.</string>
     <string name="test_center_test_all">تست تأخیر همهٔ نودها</string>
+    <!-- تماشاگر سوییچ خودکار (مسئلهٔ ۱۶) -->
+    <string name="failover_title">سوییچ خودکار</string>
+    <string name="failover_watching">در حال پایش</string>
+    <string name="failover_off">خاموش</string>
+    <string name="failover_strikes">خطاها: %1$d</string>
+    <string name="failover_last_switch">آخرین سوییچ: %1$s ← %2$s</string>
+    <string name="failover_test_now">اکنون تست کن</string>
+    <string name="failover_event_switched">سوییچ از %1$s به %2$s</string>
+    <string name="failover_event_ok">%1$s سالم است</string>
+    <string name="failover_event_failed">شکست %1$s (خطای شمارهٔ %2$d)</string>
     <!-- کنترل‌پنل زنده (مسئلهٔ ۱۳) -->
     <string name="cockpit_traffic_title">ترافیک (۶۰ ثانیه)</string>
     <string name="cockpit_memory">حافظهٔ هسته</string>

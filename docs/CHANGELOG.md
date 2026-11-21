@@ -21,6 +21,22 @@ is [SemVer](https://semver.org/). Releases are cut from `main` tags.
 
 ### Added
 
+- **Node-health failover watchdog** (issue #16): while the tunnel runs, a
+  watchdog probes the primary group's current node through the hidden
+  speed-test selector once per `failover.intervalSec`; consecutive failures
+  accumulate strikes and, after `failover.strikes` AND the
+  `failover.cooldownSec` cooldown since the last switch have both elapsed,
+  the group is switched to the member with the best known delay (catalog
+  history, current node and DIRECT excluded) via `PUT /proxies/<group>`.
+  Inside the cooldown failures are only counted — never switched — so a
+  flapping node cannot thrash the selection. Every cycle emits a
+  `failover:event` (`probe-ok` / `probe-failed` / `switched`) on the event
+  bus, and the Test Center gains a Proton-style Failover status card
+  (Watching/Off state, current node, strike counter, last switch, last-5
+  event log, "Test now" immediate probe). JVM tests pin strike
+  accumulation, success resets, the strikes+cooldown switch gate and the
+  best-delay candidate pick with a virtual clock; all strings land in
+  EN + FA.
 - **Test Center** (issue #15): the Test tab grows into a real throughput
   lab — multi-stream download + upload speed tests routed through the
   hidden `⚡ NR SpeedTest` selector and its dedicated listener (node select

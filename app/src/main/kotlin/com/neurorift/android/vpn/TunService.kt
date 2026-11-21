@@ -19,6 +19,7 @@ import com.neurorift.android.engine.EngineHolder
 import com.neurorift.android.engine.EngineManager
 import com.neurorift.android.engine.EngineSettings
 import com.neurorift.android.engine.EngineState
+import com.neurorift.android.failover.WatchdogRunner
 import com.neurorift.android.profile.ProfileRegistry
 import com.neurorift.android.settings.AppFilter
 import com.neurorift.android.settings.SettingsStore
@@ -175,6 +176,8 @@ class TunService : VpnService() {
             }
             EngineHolder.transitionTo(EngineState.RUNNING)
             notifyStatus(getString(R.string.vpn_state_running))
+            // Issue #16: node-health failover watchdog (settings-gated).
+            WatchdogRunner.start(serviceScope, engine()) { settingsStore.getBlocking().failover }
         } catch (e: Exception) {
             shutdownQuietly()
             EngineHolder.transitionTo(EngineState.FAILED, e.message)
@@ -226,6 +229,7 @@ class TunService : VpnService() {
     }
 
     private fun shutdownQuietly() {
+        WatchdogRunner.stop()
         runCatching { CoreBridge.stopTun() }
         runCatching { tun?.close() }
         tun = null
