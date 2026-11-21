@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CallMerge
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -43,6 +44,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.neurorift.android.R
+import com.neurorift.android.profile.ProfileKind
 import com.neurorift.android.profile.ProfileManager
 import com.neurorift.android.profile.ProfileViewModel
 import com.neurorift.android.profile.ScheduleMath
@@ -57,6 +59,8 @@ import java.util.Date
  * Issue #17: an edit action per card opens the raw YAML editor for the
  * profile. Issue #18: Update All action with an outcome summary row and a
  * per-card "next update" time for interval-managed subscriptions.
+ * Issue #23: a union toggle per card joins a subscription into the union
+ * routing set (multiple subscriptions active as ONE routing set).
  */
 @Composable
 fun ProfilesScreen(
@@ -141,6 +145,7 @@ fun ProfilesScreen(
                         record = record,
                         active = record.id == vm.activeId,
                         onActivate = { vm.activate(record.id) },
+                        onToggleUnion = { vm.setUnionActive(record.id, !record.unionActive) },
                         onRefresh = { vm.refresh(record.id) },
                         onEdit = { onEditProfile(record.id) },
                         onDelete = { vm.remove(record.id) },
@@ -186,6 +191,7 @@ private fun ProfileCard(
     record: ProfileManager.ProfileRecord,
     active: Boolean,
     onActivate: () -> Unit,
+    onToggleUnion: () -> Unit,
     onRefresh: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
@@ -210,6 +216,16 @@ private fun ProfileCard(
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.weight(1f),
                 )
+                // Union member chip (#23): additional provider source routed
+                // as one set with the active profile.
+                if (record.unionActive) {
+                    Text(
+                        text = stringResource(R.string.profiles_union),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.tertiary,
+                        modifier = Modifier.padding(end = 8.dp),
+                    )
+                }
                 if (active) {
                     Text(
                         text = stringResource(R.string.profiles_active),
@@ -238,6 +254,21 @@ private fun ProfileCard(
                 },
             )
             Row(modifier = Modifier.align(Alignment.End)) {
+                // Union toggle (#23): joins/leaves the subscription union
+                // routing set — NODES-kind profiles only (providers union).
+                if (record.kind == ProfileKind.NODES) {
+                    IconButton(onClick = onToggleUnion) {
+                        Icon(
+                            Icons.Filled.CallMerge,
+                            contentDescription = stringResource(R.string.profiles_union_toggle),
+                            tint = if (record.unionActive) {
+                                MaterialTheme.colorScheme.tertiary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                        )
+                    }
+                }
                 IconButton(onClick = onRefresh) {
                     Icon(Icons.Filled.Refresh, contentDescription = stringResource(R.string.profiles_refresh))
                 }

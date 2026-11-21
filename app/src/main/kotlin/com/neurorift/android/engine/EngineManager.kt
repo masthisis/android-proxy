@@ -31,6 +31,8 @@ class EngineManager(
     private val settingsProvider: () -> EngineSettings,
     private val profilesProvider: () -> List<ProfileMeta>,
     private val activeIdProvider: () -> String?,
+    /** #23: ids of the profiles joined into the union routing set (registry order). */
+    private val unionIdsProvider: () -> List<String> = { emptyList() },
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
     /**
      * Applies a parsed config to the embedded core. Injectable so JVM unit
@@ -81,6 +83,7 @@ class EngineManager(
             settings = settings,
             profiles = profilesProvider(),
             activeId = activeIdProvider(),
+            unionIds = unionIdsProvider(),
             contentOf = ::readProfileContent,
             overrides = settings.routingOverrides,
         )
@@ -109,6 +112,7 @@ class EngineManager(
             settings = settings,
             profiles = profilesProvider(),
             activeId = activeIdProvider(),
+            unionIds = unionIdsProvider(),
             contentOf = ::readProfileContent,
             overrides = settings.routingOverrides,
         )

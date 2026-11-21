@@ -69,6 +69,8 @@ class ProfileManager(
         val lastSyncAt: Long = 0L,
         val lastError: String? = null,
         val nodeCount: Int = 0,
+        /** #23: member of the union routing set (additional provider sources). */
+        val unionActive: Boolean = false,
     )
 
     private val json = Json { prettyPrint = true; ignoreUnknownKeys = true }
@@ -314,6 +316,37 @@ class ProfileManager(
         emitChanged()
         applyEngine("profile-activated")
         return true
+    }
+
+    /**
+     * Union membership toggle (#23): marks a profile as part of the union
+     * routing set — its provider joins the active profile's Node Select
+     * `use` list so multiple subscriptions route as ONE set (Windows
+     * parity). [activeId] stays the PRIMARY profile; union members are
+     * additional provider sources. Persists + emits `profiles:changed`; a
+     * running tunnel hot-reloads the regenerated config (same pattern as
+     * [setActive]). Unknown ids are a no-op.
+     */
+    fun setUnionActive(profileId: String, active: Boolean): Boolean {
+        load()
+        val idx = registry.indexOfFirst { it.id == profileId }
+        if (idx < 0) return false
+        if (registry[idx].unionActive == active) return true
+        registry[idx] = registry[idx].copy(unionActive = active)
+        persist()
+        emitChanged()
+        applyEngine("profile-union-changed")
+        return true
+    }
+
+    /**
+     * Ids of the profiles currently flagged as union members, in registry
+     * order (ConfigGen filters them to NODES kinds and excludes the
+     * primary — engine/unionIds plumbing for issue #23).
+     */
+    fun unionIds(): List<String> {
+        load()
+        return registry.filter { it.unionActive }.map { it.id }
     }
 
     fun rename(profileId: String, name: String): Boolean {

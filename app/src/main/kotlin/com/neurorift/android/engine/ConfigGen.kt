@@ -45,15 +45,23 @@ object ConfigGen {
     fun providerName(profileID: String): String = "sub-$profileID"
 
     /**
-     * Renders the runtime config for the given profiles; [active] selects the
+     * Renders the runtime config for the given profiles; [activeId] selects the
      * routed profile (null = idle). [contentOf] resolves profile file
      * contents (raw YAML for CLASH/LOCAL; unused for NODES, whose provider
      * files are read by mihomo directly).
+     *
+     * [unionIds] (#23) lists the profiles joined into the union routing set:
+     * their NODES providers are appended to the Node Select `use` list after
+     * the primary, in registry order, so multiple subscriptions route as ONE
+     * set. Members already materialized by [appProviders] only start being
+     * referenced here — union providers get no health-check (only the active
+     * provider keeps one) and CLASH-kind / unknown ids are ignored.
      */
     fun generate(
         settings: EngineSettings,
         profiles: List<ProfileMeta>,
         activeId: String?,
+        unionIds: List<String> = emptyList(),
         overrides: List<RoutingRule> = emptyList(),
         contentOf: (ProfileMeta) -> String,
     ): String {
@@ -61,7 +69,13 @@ object ConfigGen {
         return if (active != null && (active.kind == ProfileKind.CLASH || active.kind == ProfileKind.LOCAL)) {
             generateClash(settings, profiles, active, contentOf, overrides)
         } else {
-            generateNodes(settings, profiles, active?.takeIf { it.kind == ProfileKind.NODES }, overrides)
+            generateNodes(
+                settings,
+                profiles,
+                active?.takeIf { it.kind == ProfileKind.NODES },
+                overrides,
+                unionIds,
+            )
         }
     }
 
@@ -72,6 +86,7 @@ object ConfigGen {
         profiles: List<ProfileMeta>,
         active: ProfileMeta?,
         overrides: List<RoutingRule>,
+        unionIds: List<String> = emptyList(),
     ): String {
         val root = OMap()
             .set("mode", settings.mode)
@@ -100,12 +115,25 @@ object ConfigGen {
             OMap().set("name", SPEED_TEST).set("type", "select").set("include-all", true),
         )
         if (active != null) {
+            // Union routing set (#23): the primary provider first, then the
+            // union members in registry order (NODES kinds only, primary
+            // excluded — it is already first).
+            val useProviders = buildList {
+                add(providerName(active.id))
+                for (profile in profiles) {
+                    if (profile.id != active.id && profile.kind == ProfileKind.NODES &&
+                        profile.id in unionIds
+                    ) {
+                        add(providerName(profile.id))
+                    }
+                }
+            }
             groups.add(
                 OMap()
                     .set("name", NODE_SELECT)
                     .set("type", "select")
                     .set("proxies", listOf("DIRECT"))
-                    .set("use", listOf(providerName(active.id))),
+                    .set("use", useProviders),
             )
             groups.add(
                 OMap()

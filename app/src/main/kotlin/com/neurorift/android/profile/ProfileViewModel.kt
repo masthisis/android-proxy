@@ -111,6 +111,12 @@ class ProfileViewModel(app: Application) : AndroidViewModel(app) {
         refreshList()
     }
 
+    /** Union membership toggle (#23): joins/leaves the union routing set. */
+    fun setUnionActive(id: String, active: Boolean) {
+        manager.setUnionActive(id, active)
+        refreshList()
+    }
+
     fun refresh(id: String) {
         viewModelScope.launch(Dispatchers.IO) {
             manager.update(id) {

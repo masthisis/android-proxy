@@ -16,4 +16,8 @@ object ProfileRegistry {
 
     fun activeId(context: Context): String? =
         runCatching { manager(context).activeId() }.getOrElse { null }
+
+    /** Union routing-set member ids in registry order (issue #23). */
+    fun unionIds(context: Context): List<String> =
+        runCatching { manager(context).unionIds() }.getOrElse { emptyList() }
 }

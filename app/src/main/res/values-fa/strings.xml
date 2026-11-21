@@ -41,6 +41,9 @@
     <string name="profiles_summary">به‌روزرسانی‌شده %1$d · ناموفق %2$d · ردشده %3$d</string>
     <string name="profiles_next_update">بعدی: %1$s</string>
     <string name="profiles_scheduler_error">به‌روزرسانی خودکار اشتراک ناموفق بود: %1$s</string>
+    <!-- اتحاد اشتراک‌ها (مسئلهٔ ۲۳) -->
+    <string name="profiles_union">اتحاد</string>
+    <string name="profiles_union_toggle">اتحاد اشتراک‌ها — مسیریابی به‌صورت یک مجموعه</string>
     <!-- خانه به سبک پروتون (مسئلهٔ ۳۴) -->
     <string name="home_disconnected">شما متصل نیستید</string>
     <string name="home_connected_hint">ترافیک شما از طریق تانل محافظت می‌شود.</string>

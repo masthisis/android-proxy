@@ -21,6 +21,17 @@ is [SemVer](https://semver.org/). Releases are cut from `main` tags.
 
 ### Added
 
+- **Subscription union** (issue #23): Profiles gain a union toggle per card
+  (CallMerge action + a `union` chip) that joins a subscription into the
+  union routing set — the `🚀 Node Select` group's `use` list extends from
+  the active provider to the active provider + every union-active NODES
+  provider in registry order (primary first), so multiple subscriptions are
+  active as ONE routing set (Windows parity). Union providers stay
+  materialized file providers without a health-check (only the primary keeps
+  one); `activeId` semantics are unchanged (primary + additional provider
+  sources). The flag persists migration-safely as `unionActive` in
+  `profiles.json` and hot-reloads a running tunnel through the engine's
+  `unionIdsProvider` plumbing (EngineManager/ConfigGen/TunService).
 - **Node-health failover watchdog** (issue #16): while the tunnel runs, a
   watchdog probes the primary group's current node through the hidden
   speed-test selector once per `failover.intervalSec`; consecutive failures

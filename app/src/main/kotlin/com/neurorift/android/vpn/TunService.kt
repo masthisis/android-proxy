@@ -73,6 +73,9 @@ class TunService : VpnService() {
             settingsProvider = { engineSettings() },
             profilesProvider = { ProfileRegistry.meta(this@TunService) },
             activeIdProvider = { ProfileRegistry.activeId(this@TunService) },
+            // Subscription union (#23): additional provider sources routed
+            // as ONE set with the primary profile.
+            unionIdsProvider = { ProfileRegistry.unionIds(this@TunService) },
         ).also { engine = it }
 
     // ---------------------------------------------------------------------
