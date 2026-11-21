@@ -32,6 +32,13 @@ class EngineManager(
     private val profilesProvider: () -> List<ProfileMeta>,
     private val activeIdProvider: () -> String?,
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
+    /**
+     * Applies a parsed config to the embedded core. Injectable so JVM unit
+     * tests never touch the real AAR's JNI classes (UnsatisfiedLinkError on
+     * the plain JVM) — mirrors the Windows repo, which tests configgen
+     * without spawning the core.
+     */
+    private val applier: (String) -> Unit = { CoreBridge.applyConfig(it) },
 ) {
 
     val restClient: MihomoRestClient =
@@ -70,7 +77,7 @@ class EngineManager(
         val wasRunning = EngineHolder.status.value.state == EngineState.RUNNING
         if (!wasRunning) EngineHolder.transitionTo(EngineState.STARTING)
         try {
-            CoreBridge.applyConfig(yaml)
+            applier(yaml)
             ensureStreamLoops()
             if (!wasRunning) EngineHolder.transitionTo(EngineState.RUNNING)
         } catch (e: Exception) {
@@ -99,7 +106,7 @@ class EngineManager(
             EventBus.emit(Events.GROUPS_REFRESH, reason)
         } else {
             try {
-                CoreBridge.applyConfig(yaml)
+                applier(yaml)
                 EventBus.emit(Events.GROUPS_REFRESH, reason)
             } catch (e: Exception) {
                 recordApplyFailure()

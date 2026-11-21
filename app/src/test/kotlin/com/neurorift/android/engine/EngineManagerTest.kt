@@ -17,17 +17,22 @@ import org.junit.rules.TemporaryFolder
 /**
  * Engine supervisor unit tests: crash-loop guard (Windows parity: 5 apply
  * failures / 2 min fire `core:crashloop` exactly once), config file writes,
- * hot reload refresh events, and the bounded log ring. The core AAR is a
- * no-op stub under JVM tests, so the happy path exercises the file writes
- * and state transitions.
+ * hot reload refresh events, and the bounded log ring. The applier is
+ * injected (recorder) so the tests never touch the real AAR's JNI classes,
+ * which cannot load on the plain JVM.
  */
 class EngineManagerTest {
 
     @get:Rule
     val tmp = TemporaryFolder()
 
+    private val applied = mutableListOf<String>()
+
     @Before
-    fun resetState() = EngineHolder.reset()
+    fun resetState() {
+        applied.clear()
+        EngineHolder.reset()
+    }
 
     private fun manager(): EngineManager =
         EngineManager(
@@ -35,6 +40,7 @@ class EngineManagerTest {
             settingsProvider = { EngineSettings.withGeneratedSecret() },
             profilesProvider = { emptyList() },
             activeIdProvider = { null },
+            applier = { applied.add(it) },
         )
 
     @Test
@@ -44,6 +50,7 @@ class EngineManagerTest {
         val config = mgr.configPath()
         assertTrue(config.exists())
         assertTrue(config.readText().contains("external-controller"))
+        assertTrue("applier saw the config", applied.isNotEmpty())
         assertEquals(EngineState.RUNNING, EngineHolder.status.value.state)
     }
 
