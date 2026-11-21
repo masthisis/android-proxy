@@ -51,4 +51,17 @@
     <string name="proxies_test_group">تست این گروه</string>
     <string name="proxies_test_node">تست این نود</string>
     <string name="proxies_empty">گروهی نیست — با یک پروفایل فعال متصل شوید.</string>
+    <!-- کنترل‌پنل زنده (مسئلهٔ ۱۳) -->
+    <string name="cockpit_traffic_title">ترافیک (۶۰ ثانیه)</string>
+    <string name="cockpit_memory">حافظهٔ هسته</string>
+    <string name="connections_close_one">بستن اتصال</string>
+    <string name="connections_close_all">بستن همهٔ اتصال‌ها</string>
+    <string name="connections_close_all_confirm">همهٔ اتصال‌های فعال بسته شوند؟ دانلودهای در حال انجام قطع می‌شوند.</string>
+    <string name="connections_close_all_confirm_yes">بستن همه</string>
+    <string name="connections_empty">اتصال فعالی وجود ندارد.</string>
+    <string name="logs_copy">کپی گزارش‌ها</string>
+    <string name="logs_clear">پاک کردن گزارش‌ها</string>
+    <string name="logs_empty">هنوز خطی ثبت نشده — برای دیدن جریان هسته متصل شوید.</string>
+    <string name="rules_search">جست‌وجوی قوانین</string>
+    <string name="rules_empty">قوانینی بارگذاری نشده — با یک پروفایل فعال متصل شوید.</string>
 </resources>

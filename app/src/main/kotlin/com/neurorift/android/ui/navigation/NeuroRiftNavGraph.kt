@@ -22,10 +22,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.neurorift.android.R
+import com.neurorift.android.ui.screens.ConnectionsScreen
 import com.neurorift.android.ui.screens.DashboardScreen
+import com.neurorift.android.ui.screens.LogsScreen
 import com.neurorift.android.ui.screens.PlaceholderScreen
 import com.neurorift.android.ui.screens.ProxiesScreen
 import com.neurorift.android.ui.screens.ProfilesScreen
+import com.neurorift.android.ui.screens.RulesScreen
 
 /**
  * App navigation graph (issue #9). Bottom navigation with five destinations;
@@ -95,7 +98,13 @@ fun NeuroRiftNavGraph(
             Destination.entries.forEach { destination ->
                 composable(destination.route) {
                     when (destination) {
-                        Destination.Dashboard -> DashboardScreen(onConnect = onConnect, onDisconnect = onDisconnect)
+                        Destination.Dashboard -> DashboardScreen(
+                            onConnect = onConnect,
+                            onDisconnect = onDisconnect,
+                            onOpenConnections = { navController.navigate(SecondaryRoute.CONNECTIONS) },
+                            onOpenLogs = { navController.navigate(SecondaryRoute.LOGS) },
+                            onOpenRules = { navController.navigate(SecondaryRoute.RULES) },
+                        )
                         Destination.Proxies -> ProxiesScreen()
                         Destination.Profiles -> ProfilesScreen()
                         else -> PlaceholderScreen(
@@ -107,25 +116,13 @@ fun NeuroRiftNavGraph(
                 }
             }
             composable(SecondaryRoute.CONNECTIONS) {
-                PlaceholderScreen(
-                    title = stringResource(R.string.nav_connections),
-                    icon = Destination.Dashboard.icon,
-                    issueNumber = 13,
-                )
+                ConnectionsScreen()
             }
             composable(SecondaryRoute.LOGS) {
-                PlaceholderScreen(
-                    title = stringResource(R.string.nav_logs),
-                    icon = Destination.Dashboard.icon,
-                    issueNumber = 13,
-                )
+                LogsScreen()
             }
             composable(SecondaryRoute.RULES) {
-                PlaceholderScreen(
-                    title = stringResource(R.string.nav_rules),
-                    icon = Destination.Dashboard.icon,
-                    issueNumber = 13,
-                )
+                RulesScreen()
             }
         }
     }
