@@ -20,7 +20,8 @@ class TrafficHistory(private val capacity: Int = 60) {
     fun snapshot(): List<StreamClient.TrafficTick> = points.toList()
 
     /** Peak of either direction across the window (graph normalization). */
-    fun maxBytesPerSecond(): Long = points.maxOf { maxOf(it.up, it.down) }
+    fun maxBytesPerSecond(): Long =
+        if (points.isEmpty()) 0L else points.maxOf { maxOf(it.up, it.down) }
 
     fun clear() = points.clear()
 }
