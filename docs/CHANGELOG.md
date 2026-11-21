@@ -66,6 +66,17 @@ is [SemVer](https://semver.org/). Releases are cut from `main` tags.
   available/downloading/ready; `updates.autoCheck` checks at most every 6 h
   on app start. JVM tests pin Semver ordering, the asset naming/URL
   derivation and the atom parsing; strings land in EN + FA.
+- **Automatic problem reports** (issue #25): the app installs a redacting
+  uncaught-exception handler (`report/CrashReporter`) that writes a
+  `crash-latest.txt` bundle (stack trace + app version + API level + model
+  + thread name) with the controller secret, every `Bearer <token>`
+  authorization and every subscription URL stripped before anything
+  touches disk. On the next launch MainActivity offers a pre-filled
+  GitHub issue (`issues/new`, title "Crash report (auto)", body capped to
+  a browser-safe length) or dismiss. Redaction + truncation are pure JVM
+  (device info composed at the install call site); tests pin secret /
+  bearer / URL redaction, the ~4000-char report cap and the
+  write → pending → clear lifecycle; strings land in EN + FA.
 - **Test Center** (issue #15): the Test tab grows into a real throughput
   lab — multi-stream download + upload speed tests routed through the
   hidden `⚡ NR SpeedTest` selector and its dedicated listener (node select

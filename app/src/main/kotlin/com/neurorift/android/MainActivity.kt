@@ -50,6 +50,7 @@ class MainActivity : ComponentActivity() {
                     onConnect = { prepareAndStart() },
                     onDisconnect = { TunService.stop(this) },
                 )
+                com.neurorift.android.report.CrashReportDialogHost()
             }
         }
     }
