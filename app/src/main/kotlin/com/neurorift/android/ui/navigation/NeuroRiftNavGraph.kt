@@ -20,6 +20,7 @@ import androidx.navigation.compose.rememberNavController
 import com.neurorift.android.R
 import com.neurorift.android.ui.screens.DashboardScreen
 import com.neurorift.android.ui.screens.PlaceholderScreen
+import com.neurorift.android.ui.screens.ProfilesScreen
 
 /**
  * App navigation graph (issue #9). Bottom navigation with five destinations;
@@ -79,10 +80,10 @@ fun NeuroRiftNavGraph(
         ) {
             Destination.entries.forEach { destination ->
                 composable(destination.route) {
-                    if (destination == Destination.Dashboard) {
-                        DashboardScreen(onConnect = onConnect, onDisconnect = onDisconnect)
-                    } else {
-                        PlaceholderScreen(
+                    when (destination) {
+                        Destination.Dashboard -> DashboardScreen(onConnect = onConnect, onDisconnect = onDisconnect)
+                        Destination.Profiles -> ProfilesScreen()
+                        else -> PlaceholderScreen(
                             title = stringResource(destination.labelRes),
                             icon = destination.icon,
                             issueNumber = placeholderIssueOf(destination),
